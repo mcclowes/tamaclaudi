@@ -1,11 +1,12 @@
-import type {
-  Config,
-  CreatureEvent,
-  Health,
-  Needs,
-  Seed,
-  Stage,
-  Stats,
+import {
+  STAGES,
+  type Config,
+  type CreatureEvent,
+  type Health,
+  type Needs,
+  type Seed,
+  type Stage,
+  type Stats,
 } from "../types.js";
 import { decayNeeds } from "./stats.js";
 import {
@@ -19,6 +20,34 @@ import { applyEvent } from "./effects.js";
 import { computeHealth } from "./health.js";
 
 const MS_PER_HOUR = 60 * 60 * 1000;
+
+/**
+ * Decay needs across `[fromMs, toMs)`, splitting the span at each stage onset
+ * so every slice decays at its own stage's rate. A single multiplier for the
+ * whole gap would, e.g., decay a child->teen span entirely at the gentler teen
+ * rate, under-counting the demanding child hours.
+ */
+function decayAcrossStages(
+  needs: Needs,
+  bornAt: string,
+  fromMs: number,
+  toMs: number,
+): Needs {
+  const bornMs = new Date(bornAt).getTime();
+  const boundaries = STAGES.map((s) => bornMs + STAGE_ONSET_DAYS[s] * MS_PER_DAY)
+    .filter((t) => t > fromMs && t < toMs)
+    .sort((a, b) => a - b);
+
+  let cursor = fromMs;
+  let current = needs;
+  for (const edge of [...boundaries, toMs]) {
+    const hours = (edge - cursor) / MS_PER_HOUR;
+    const stage = stageForAge(ageDays(bornAt, new Date(cursor)));
+    current = decayNeeds(current, hours, stageMultiplier(stage));
+    cursor = edge;
+  }
+  return current;
+}
 
 export interface TickChanges {
   hoursElapsed: number;
@@ -81,9 +110,11 @@ export function advance(
   // last tick, or the moment it hatched out of the egg.
   const hatchMs = bornMs + STAGE_ONSET_DAYS.baby * MS_PER_DAY;
   const decayFromMs = Math.max(lastTickMs, hatchMs);
-  const decayHours = Math.max(0, (nowMs - decayFromMs) / MS_PER_HOUR);
 
-  let needs = decayNeeds(stats.needs, decayHours, stageMultiplier(stageAfter));
+  let needs =
+    nowMs > decayFromMs
+      ? decayAcrossStages(stats.needs, stats.bornAt, decayFromMs, nowMs)
+      : stats.needs;
 
   const eventsApplied: TickChanges["eventsApplied"] = [];
   for (const event of events) {

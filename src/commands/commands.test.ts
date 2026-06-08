@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { paths, type CreaturePaths } from "../store/paths.js";
-import { exists, readStats } from "../store/io.js";
+import { exists, readStats, readEvents } from "../store/io.js";
 import type { CommandContext } from "./context.js";
 import { init } from "./init.js";
 import { queueAction } from "./actions.js";
@@ -48,6 +48,22 @@ describe("the full loop", () => {
     expect(stats.stage).not.toBe("egg");
     // The feed event was drained and applied.
     expect(diff).toMatch(/feed\(berries\)/);
+  });
+
+  it("holds events queued while still an egg, then applies them after hatching", () => {
+    // Born at 00:00; hatches at +0.5d (12:00). Feed while still an egg.
+    init({ rngSeed: 1, name: "Pip" }, at("2026-06-08T00:00:00Z"));
+    queueAction("feed", "berries", at("2026-06-08T01:00:00Z"));
+
+    // Tick while still an egg — the feed must NOT be spent.
+    const eggDiff = tick(at("2026-06-08T02:00:00Z"));
+    expect(eggDiff).not.toMatch(/feed/);
+    expect(readEvents(p)).toHaveLength(1); // still waiting in the inbox
+
+    // Tick after hatching — the held feed now lands.
+    const hatchDiff = tick(at("2026-06-09T00:00:00Z"));
+    expect(hatchDiff).toMatch(/feed\(berries\)/);
+    expect(readEvents(p)).toHaveLength(0);
   });
 
   it("status reports mechanical truth with no voice", () => {
