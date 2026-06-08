@@ -17,6 +17,11 @@ import {
   tasks,
   taskNote,
   taskDone,
+  goal,
+  goals,
+  goalNote,
+  goalDone,
+  goalDrop,
 } from "./commands/agency.js";
 
 const HELP = `tamaclaudie — raise a creature in your terminal
@@ -42,6 +47,14 @@ Usage: tama <command> [args]
   task-note <id> "..."   (soul) log progress on a task
   task-done <id> "..."   (soul) close a task with an outcome
 
+ its own goals (the creature forms these itself; you just watch):
+  goals [--all]          what your creature wants right now (default: active)
+  goal "..." [--origin reactive|owner|organic --spark ".."]
+                         (soul) form a goal of its own
+  goal-note <id> "..."   (soul) log a step or reflection on a goal
+  goal-done <id> "..."   (soul) fulfil a goal it reached
+  goal-drop <id> "..."   (soul) let go of a goal that no longer fits
+
  the creature's agency (the soul files these; you adjudicate):
   proposals [--all]      external actions it wants to take (default: open ones)
   approve <id>           approve a proposal; the loop may then run it
@@ -56,7 +69,7 @@ Usage: tama <command> [args]
 `;
 
 /** Flags that consume the following argument as their value. */
-const VALUE_FLAGS = new Set(["seed", "why", "cmd"]);
+const VALUE_FLAGS = new Set(["seed", "why", "cmd", "origin", "spark"]);
 
 /** Pull `--flag` and `--flag value` out of args, returning the rest. */
 function parseFlags(args: string[]): { positional: string[]; flags: Map<string, string | true> } {
@@ -147,6 +160,19 @@ function run(argv: string[]): string {
       return taskNote(positional[0], positional.slice(1).join(" ") || undefined, ctx);
     case "task-done":
       return taskDone(positional[0], positional.slice(1).join(" ") || undefined, ctx);
+    case "goal":
+      return goal(
+        { text: positional.join(" "), origin: strFlag(flags, "origin"), spark: strFlag(flags, "spark") },
+        ctx,
+      );
+    case "goals":
+      return goals(ctx, flags.has("all"));
+    case "goal-note":
+      return goalNote(positional[0], positional.slice(1).join(" ") || undefined, ctx);
+    case "goal-done":
+      return goalDone(positional[0], positional.slice(1).join(" ") || undefined, ctx);
+    case "goal-drop":
+      return goalDrop(positional[0], positional.slice(1).join(" ") || undefined, ctx);
     case "propose":
       return propose(
         { action: positional.join(" "), why: strFlag(flags, "why"), command: strFlag(flags, "cmd") },

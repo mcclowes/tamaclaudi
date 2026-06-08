@@ -18,8 +18,13 @@ import {
   tasks,
   taskNote,
   taskDone,
+  goal,
+  goals,
+  goalNote,
+  goalDone,
+  goalDrop,
 } from "./agency.js";
-import { readProposals, readQuestions, readTasks } from "../store/agency.js";
+import { readProposals, readQuestions, readTasks, readGoals } from "../store/agency.js";
 
 let dir: string;
 let p: CreaturePaths;
@@ -125,5 +130,58 @@ describe("tasks", () => {
 
   it("task needs text", () => {
     expect(() => task(undefined, at("x"))).toThrow(/needs a problem/);
+  });
+});
+
+describe("goals", () => {
+  it("forms a self-set goal, recording its origin and spark", () => {
+    goal(
+      { text: "reconnect with you", origin: "reactive", spark: "you were away nine hours" },
+      at("2026-06-08T01:00:00Z"),
+    );
+    const stored = readGoals(p);
+    expect(stored).toHaveLength(1);
+    expect(stored[0]!.id).toBe("g1");
+    expect(stored[0]!.status).toBe("active");
+    expect(stored[0]!.origin).toBe("reactive");
+    expect(stored[0]!.spark).toBe("you were away nine hours");
+    expect(goals(at("x"))).toMatch(/reconnect with you/);
+  });
+
+  it("defaults origin to organic when none is given", () => {
+    goal({ text: "learn what the stars are" }, at("2026-06-08T01:00:00Z"));
+    expect(readGoals(p)[0]!.origin).toBe("organic");
+  });
+
+  it("rejects an unknown origin", () => {
+    expect(() => goal({ text: "x", origin: "vibes" }, at("x"))).toThrow(/Unknown --origin/);
+  });
+
+  it("notes, then fulfils a goal", () => {
+    goal({ text: "make you laugh", origin: "owner" }, at("2026-06-08T01:00:00Z"));
+    goalNote("g1", "tried a pun, no idea if it landed", at("2026-06-08T02:00:00Z"));
+    expect(readGoals(p)[0]!.notes).toHaveLength(1);
+    goalDone("g1", "you actually laughed", at("2026-06-08T03:00:00Z"));
+    const stored = readGoals(p);
+    expect(stored[0]!.status).toBe("fulfilled");
+    expect(stored[0]!.outcome).toMatch(/laughed/);
+    // fulfilled goals drop out of the active view
+    expect(goals(at("x"))).toMatch(/no active goals/);
+    expect(goals(at("x"), true)).toMatch(/make you laugh/);
+  });
+
+  it("lets a goal go gracefully, and won't touch it after", () => {
+    goal({ text: "become a great napper", origin: "organic" }, at("2026-06-08T01:00:00Z"));
+    goalDrop("g1", "I'd rather be useful than rested", at("2026-06-08T02:00:00Z"));
+    expect(readGoals(p)[0]!.status).toBe("abandoned");
+    expect(() => goalNote("g1", "second thoughts", at("2026-06-08T03:00:00Z"))).toThrow(/not active/);
+    expect(() => goalDone("g1", "did it", at("2026-06-08T03:00:00Z"))).toThrow(/not active/);
+  });
+
+  it("goal needs text, and the sub-commands need an id", () => {
+    expect(() => goal({ text: "" }, at("x"))).toThrow(/needs what it wants/);
+    expect(() => goalNote(undefined, "x", at("x"))).toThrow(/needs an id/);
+    expect(() => goalDone(undefined, "x", at("x"))).toThrow(/needs an id/);
+    expect(() => goalDrop(undefined, "x", at("x"))).toThrow(/needs an id/);
   });
 });

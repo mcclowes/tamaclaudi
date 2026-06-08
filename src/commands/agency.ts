@@ -11,8 +11,13 @@ import {
   readTasks,
   noteTask,
   finishTask,
+  addGoal,
+  readGoals,
+  noteGoal,
+  fulfilGoal,
+  abandonGoal,
 } from "../store/agency.js";
-import type { Proposal, Task } from "../types.js";
+import { GOAL_ORIGINS, type Goal, type GoalOrigin, type Proposal, type Task } from "../types.js";
 import type { CommandContext } from "./context.js";
 
 // --- the soul's side: propose an external action, ask a question -----------
@@ -144,4 +149,82 @@ export function taskDone(
   if (!outcome || !outcome.trim()) throw new Error("`tama task-done` needs an outcome.");
   const t = finishTask(id, outcome, ctx.now.toISOString(), ctx.p);
   return `🎉 finished ${t.id}: ${t.outcome}`;
+}
+
+// --- goals: the creature's own intentions ----------------------------------
+
+const ORIGIN_LABEL: Record<GoalOrigin, string> = {
+  reactive: "reacting to what happened",
+  owner: "sensing your needs",
+  organic: "of its own accord",
+};
+
+export interface GoalOptions {
+  text: string;
+  origin?: string;
+  spark?: string;
+}
+
+/** (soul) Form a goal of its own. Origin says which of the three sources it sprang from. */
+export function goal(opts: GoalOptions, ctx: CommandContext): string {
+  readStats(ctx.p); // ensure a creature exists
+  if (!opts.text.trim()) throw new Error('`tama goal` needs what it wants: tama goal "..."');
+  const origin = (opts.origin ?? "organic") as GoalOrigin;
+  if (!GOAL_ORIGINS.includes(origin)) {
+    throw new Error(`Unknown --origin "${opts.origin}". Use one of: ${GOAL_ORIGINS.join(", ")}.`);
+  }
+  const g = addGoal(
+    { text: opts.text, origin, spark: opts.spark, at: ctx.now.toISOString() },
+    ctx.p,
+  );
+  return `🌱 goal ${g.id} formed (${ORIGIN_LABEL[g.origin]}): ${g.text}`;
+}
+
+function renderGoal(g: Goal): string {
+  const lines = [`[${g.id}] (${g.status}) «${ORIGIN_LABEL[g.origin]}» ${g.text}`];
+  if (g.spark) lines.push(`     ↳ sparked by: ${g.spark}`);
+  for (const note of g.notes) lines.push(`     · ${note.text}`);
+  if (g.outcome) lines.push(`     ✓ ${g.outcome}`);
+  return lines.join("\n");
+}
+
+/** What your creature wants right now. You watch; you don't set these. */
+export function goals(ctx: CommandContext, all = false): string {
+  const items = readGoals(ctx.p);
+  const show = all ? items : items.filter((g) => g.status === "active");
+  if (!show.length) return all ? "(no goals yet)" : "(no active goals)";
+  return show.map(renderGoal).join("\n\n");
+}
+
+export function goalNote(
+  id: string | undefined,
+  note: string | undefined,
+  ctx: CommandContext,
+): string {
+  if (!id) throw new Error('`tama goal-note` needs an id and a note: tama goal-note g1 "..."');
+  if (!note || !note.trim()) throw new Error("`tama goal-note` needs a note.");
+  const g = noteGoal(id, note, ctx.now.toISOString(), ctx.p);
+  return `📝 noted on ${g.id}.`;
+}
+
+export function goalDone(
+  id: string | undefined,
+  outcome: string | undefined,
+  ctx: CommandContext,
+): string {
+  if (!id) throw new Error('`tama goal-done` needs an id and an outcome: tama goal-done g1 "..."');
+  if (!outcome || !outcome.trim()) throw new Error("`tama goal-done` needs an outcome.");
+  const g = fulfilGoal(id, outcome, ctx.now.toISOString(), ctx.p);
+  return `🌟 fulfilled ${g.id}: ${g.outcome}`;
+}
+
+export function goalDrop(
+  id: string | undefined,
+  reason: string | undefined,
+  ctx: CommandContext,
+): string {
+  if (!id) throw new Error('`tama goal-drop` needs an id and a reason: tama goal-drop g1 "..."');
+  if (!reason || !reason.trim()) throw new Error("`tama goal-drop` needs a reason.");
+  const g = abandonGoal(id, reason, ctx.now.toISOString(), ctx.p);
+  return `🍃 let go of ${g.id}: ${g.outcome}`;
 }

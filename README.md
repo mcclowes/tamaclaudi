@@ -96,6 +96,26 @@ closes them out (`tama task-done`). A task is also the usual reason it proposes 
 external action: when progress needs something outside the pen, it files a proposal and
 waits for you.
 
+### Watch what it wants
+
+A task is something you hand it. A *goal* is something the creature wants for itself —
+its own standing intention, formed and tended by the soul, never set by you. You only
+watch:
+
+```bash
+tama goals          # what your creature wants right now
+tama goals --all    # including the goals it's fulfilled or let go of
+```
+
+Goals arise three ways, and each one is tagged with which: **reacting** to something
+that happened to its body (energy crashed, you were gone for hours), **sensing** what
+would genuinely help you (its own read, not a task you gave it), or **organically**,
+from its own curiosity, temperament, and the long arc of its aspiration. It forms them
+with `tama goal`, makes progress with `tama goal-note`, reaches them with
+`tama goal-done`, and — unlike a task — may gracefully `tama goal-drop` one it has
+outgrown. The whole behaviour is steered by the soul's tick procedure (`creature/TICK.md`),
+not by simulation; the body just keeps the list honest and durable.
+
 ### Acting beyond the pen
 
 It can reach outside `creature/`, but only with your say-so. Nothing happens until you
@@ -130,6 +150,6 @@ The split that matters: `src/` never calls an LLM, and `creature/` is never writ
 simulation logic. That keeps the body honest and the soul free.
 
 ```bash
-npm test         # vitest, 60 tests
+npm test         # vitest, 76 tests
 npm run typecheck
 ```

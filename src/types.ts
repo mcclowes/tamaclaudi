@@ -97,6 +97,40 @@ export interface Task {
   outcome?: string;
 }
 
+/**
+ * Where a self-formed goal came from. The creature's own wants arise three ways:
+ * - `reactive` — in response to something that happened to its body (a need
+ *   crashed, it was neglected, a stage or health change, something you did).
+ * - `owner` — its own read on what would genuinely help @mcclowes, inferred
+ *   rather than handed to it. (A handed problem is a `Task`, not a goal.)
+ * - `organic` — from its own nature: temperament, curiosity, or a step toward
+ *   the aspiration in its seed.
+ */
+export const GOAL_ORIGINS = ["reactive", "owner", "organic"] as const;
+export type GoalOrigin = (typeof GOAL_ORIGINS)[number];
+
+export type GoalStatus = "active" | "fulfilled" | "abandoned";
+
+/**
+ * A goal the creature sets for *itself* — distinct from a `Task`, which
+ * @mcclowes hands it. Goals form, get pursued across ticks, and may be
+ * fulfilled or, unlike tasks, gracefully abandoned when they stop fitting who
+ * the creature is becoming. The soul files and tends these; @mcclowes only
+ * watches (`tama goals`) what their creature wants.
+ */
+export interface Goal {
+  id: string;
+  at: string; // ISO, when the goal formed
+  text: string; // what it wants
+  origin: GoalOrigin;
+  /** The specific thing that sparked it, in its words ("you were away 9 hours"). */
+  spark?: string;
+  status: GoalStatus;
+  notes: { at: string; text: string }[];
+  /** How it resolved, set when fulfilled or abandoned. */
+  outcome?: string;
+}
+
 /** A genuine question the creature has for you, and your eventual answer. */
 export interface Question {
   id: string;

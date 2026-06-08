@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import type { Proposal, Question, Task } from "../types.js";
+import type { Goal, GoalOrigin, Proposal, Question, Task } from "../types.js";
 import { paths, type CreaturePaths } from "./paths.js";
 
 function readArray<T>(file: string): T[] {
@@ -163,5 +163,89 @@ export function finishTask(
   found.outcome = outcome;
   found.notes.push({ at, text: `done: ${outcome}` });
   writeTasks(items, p);
+  return found;
+}
+
+// --- goals (the creature's own intentions) ---------------------------------
+
+export function readGoals(p: CreaturePaths = paths()): Goal[] {
+  return readArray<Goal>(p.goals);
+}
+
+export function writeGoals(items: Goal[], p: CreaturePaths = paths()): void {
+  writeArray(p.goals, items);
+}
+
+export function addGoal(
+  fields: { text: string; origin: GoalOrigin; spark?: string; at: string },
+  p: CreaturePaths = paths(),
+): Goal {
+  const items = readGoals(p);
+  const goal: Goal = {
+    id: nextId(items, "g"),
+    at: fields.at,
+    text: fields.text,
+    origin: fields.origin,
+    spark: fields.spark,
+    status: "active",
+    notes: [],
+  };
+  items.push(goal);
+  writeGoals(items, p);
+  return goal;
+}
+
+function findGoal(items: Goal[], id: string): Goal {
+  const found = items.find((x) => x.id === id);
+  if (!found) throw new Error(`No goal with id ${id}.`);
+  return found;
+}
+
+/** The soul logs a reflection or step on an active goal. */
+export function noteGoal(
+  id: string,
+  note: string,
+  at: string,
+  p: CreaturePaths = paths(),
+): Goal {
+  const items = readGoals(p);
+  const found = findGoal(items, id);
+  if (found.status !== "active") throw new Error(`Goal ${id} is ${found.status}, not active.`);
+  found.notes.push({ at, text: note });
+  writeGoals(items, p);
+  return found;
+}
+
+/** The soul fulfils a goal it reached. */
+export function fulfilGoal(
+  id: string,
+  outcome: string,
+  at: string,
+  p: CreaturePaths = paths(),
+): Goal {
+  const items = readGoals(p);
+  const found = findGoal(items, id);
+  if (found.status !== "active") throw new Error(`Goal ${id} is ${found.status}, not active.`);
+  found.status = "fulfilled";
+  found.outcome = outcome;
+  found.notes.push({ at, text: `fulfilled: ${outcome}` });
+  writeGoals(items, p);
+  return found;
+}
+
+/** The soul lets go of a goal that no longer fits — graceful, not a failure. */
+export function abandonGoal(
+  id: string,
+  reason: string,
+  at: string,
+  p: CreaturePaths = paths(),
+): Goal {
+  const items = readGoals(p);
+  const found = findGoal(items, id);
+  if (found.status !== "active") throw new Error(`Goal ${id} is ${found.status}, not active.`);
+  found.status = "abandoned";
+  found.outcome = reason;
+  found.notes.push({ at, text: `let go: ${reason}` });
+  writeGoals(items, p);
   return found;
 }
