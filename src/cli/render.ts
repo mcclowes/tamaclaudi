@@ -1,5 +1,6 @@
 import { NEEDS, type Needs, type Stats } from "../types.js";
 import { ageDays } from "../sim/stages.js";
+import { creatureArt } from "./art.js";
 import type { TickChanges } from "../sim/tick.js";
 
 function bar(value: number, width = 12): string {
@@ -17,6 +18,8 @@ function needLines(needs: Needs): string {
 export function renderStatus(stats: Stats, now: Date): string {
   const age = ageDays(stats.bornAt, now);
   return [
+    creatureArt(stats),
+    "",
     `stage:  ${stats.stage}`,
     `age:    ${age.toFixed(2)} days`,
     `health: ${stats.health}`,
@@ -33,6 +36,7 @@ function signed(n: number): string {
 /** The diff `tama tick` prints — what the soul loop reads to interpret. */
 export function renderTick(changes: TickChanges, stats: Stats): string {
   const lines: string[] = [];
+  lines.push(creatureArt(stats), "");
   lines.push(`tick: ${changes.hoursElapsed.toFixed(2)}h elapsed`);
 
   if (changes.hatched) lines.push("✨ the egg hatched!");

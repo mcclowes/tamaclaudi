@@ -12,6 +12,7 @@ import {
   writeTickMd,
 } from "../store/io.js";
 import { initialClaudeMd, initialFeed, tickMd } from "../soul/templates.js";
+import { creatureArt } from "../cli/art.js";
 import type { CommandContext } from "./context.js";
 
 export interface InitOptions {
@@ -54,6 +55,8 @@ export function init(opts: InitOptions, ctx: CommandContext): string {
   writeFeed(initialFeed(seed), ctx.p);
 
   return [
+    creatureArt(stats),
+    "",
     `🥚 Laid an egg at ${ctx.p.dir}`,
     `   name: ${seed.name}`,
     `   temperament rolled, aspiration: ${seed.aspiration}`,
