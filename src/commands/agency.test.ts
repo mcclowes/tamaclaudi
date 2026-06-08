@@ -25,6 +25,9 @@ import {
   goalDrop,
 } from "./agency.js";
 import { readProposals, readQuestions, readTasks, readGoals } from "../store/agency.js";
+import { readStats, writeStats, readSeed } from "../store/io.js";
+import { ACCOMPLISHMENT_JOY, applyEvent } from "../sim/effects.js";
+import { clamp } from "../sim/stats.js";
 
 let dir: string;
 let p: CreaturePaths;
@@ -128,8 +131,54 @@ describe("tasks", () => {
     expect(() => taskNote("t1", "more", at("2026-06-08T03:00:00Z"))).toThrow(/already done/);
   });
 
+  it("won't finish a task twice (no farming the joy reward)", () => {
+    task("a thing", at("2026-06-08T01:00:00Z"));
+    taskDone("t1", "done", at("2026-06-08T02:00:00Z"));
+    expect(() => taskDone("t1", "again", at("2026-06-08T03:00:00Z"))).toThrow(/already done/);
+  });
+
   it("task needs text", () => {
     expect(() => task(undefined, at("x"))).toThrow(/needs a problem/);
+  });
+});
+
+describe("joy from accomplishment", () => {
+  /** Drop joy low so the reward lands clear of the 100 ceiling. */
+  const setJoy = (value: number) => {
+    const stats = readStats(p);
+    writeStats({ ...stats, needs: { ...stats.needs, joy: value } }, p);
+  };
+
+  it("finishing a task lifts joy in the body", () => {
+    setJoy(20);
+    task("solve a real problem", at("2026-06-08T01:00:00Z"));
+    taskDone("t1", "solved it", at("2026-06-08T02:00:00Z"));
+    expect(readStats(p).needs.joy).toBe(clamp(20 + ACCOMPLISHMENT_JOY.task));
+  });
+
+  it("fulfilling a goal lifts joy in the body", () => {
+    setJoy(20);
+    goal({ text: "learn the stars", origin: "organic" }, at("2026-06-08T01:00:00Z"));
+    goalDone("g1", "I know them now", at("2026-06-08T02:00:00Z"));
+    expect(readStats(p).needs.joy).toBe(clamp(20 + ACCOMPLISHMENT_JOY.goal));
+  });
+
+  it("accomplishment outweighs even a favourite game — work, not play, is the main joy", () => {
+    // Compute the most joy play can ever give: a favourite game from rock bottom.
+    const seed = readSeed(p);
+    const before = { fullness: 0, energy: 100, hygiene: 0, joy: 0, bond: 0 };
+    const favouriteGame = seed.likes.games[0];
+    const bestPlayJoy = applyEvent(before, { at: "x", type: "play", arg: favouriteGame }, seed).joy;
+    expect(ACCOMPLISHMENT_JOY.task).toBeGreaterThan(bestPlayJoy);
+    expect(ACCOMPLISHMENT_JOY.goal).toBeGreaterThan(bestPlayJoy);
+  });
+
+  it("a dead creature feels no joy from a finished task", () => {
+    const stats = readStats(p);
+    writeStats({ ...stats, health: "dead", needs: { ...stats.needs, joy: 20 } }, p);
+    task("a thing", at("2026-06-08T01:00:00Z"));
+    taskDone("t1", "done", at("2026-06-08T02:00:00Z"));
+    expect(readStats(p).needs.joy).toBe(20);
   });
 });
 

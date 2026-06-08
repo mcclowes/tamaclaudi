@@ -1,4 +1,6 @@
-import { readStats } from "../store/io.js";
+import { readStats, writeStats } from "../store/io.js";
+import { ACCOMPLISHMENT_JOY } from "../sim/effects.js";
+import { applyDelta } from "../sim/stats.js";
 import {
   addProposal,
   readProposals,
@@ -106,6 +108,17 @@ export function answer(
   return `💡 answered ${q.id}. It'll take it in on the next tick.`;
 }
 
+/**
+ * The body's reward for real accomplishment: a lasting lift to joy. Solving
+ * problems and reaching goals is what makes the creature joyful — not play.
+ * A dead creature feels nothing; everyone else gets the lift.
+ */
+function rejoice(joy: number, ctx: CommandContext): void {
+  const stats = readStats(ctx.p);
+  if (stats.health === "dead") return;
+  writeStats({ ...stats, needs: applyDelta(stats.needs, "joy", joy) }, ctx.p);
+}
+
 // --- tasks: hand the creature a problem ------------------------------------
 
 export function task(text: string | undefined, ctx: CommandContext): string {
@@ -148,6 +161,7 @@ export function taskDone(
   if (!id) throw new Error('`tama task-done` needs an id and an outcome: tama task-done t1 "..."');
   if (!outcome || !outcome.trim()) throw new Error("`tama task-done` needs an outcome.");
   const t = finishTask(id, outcome, ctx.now.toISOString(), ctx.p);
+  rejoice(ACCOMPLISHMENT_JOY.task, ctx);
   return `🎉 finished ${t.id}: ${t.outcome}`;
 }
 
@@ -215,6 +229,7 @@ export function goalDone(
   if (!id) throw new Error('`tama goal-done` needs an id and an outcome: tama goal-done g1 "..."');
   if (!outcome || !outcome.trim()) throw new Error("`tama goal-done` needs an outcome.");
   const g = fulfilGoal(id, outcome, ctx.now.toISOString(), ctx.p);
+  rejoice(ACCOMPLISHMENT_JOY.goal, ctx);
   return `🌟 fulfilled ${g.id}: ${g.outcome}`;
 }
 

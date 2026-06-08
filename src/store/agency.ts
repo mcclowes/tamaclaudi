@@ -159,6 +159,7 @@ export function finishTask(
 ): Task {
   const items = readTasks(p);
   const found = findTask(items, id);
+  if (found.status === "done") throw new Error(`Task ${id} is already done.`);
   found.status = "done";
   found.outcome = outcome;
   found.notes.push({ at, text: `done: ${outcome}` });

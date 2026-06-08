@@ -4,10 +4,19 @@ import { applyDelta } from "./stats.js";
 /** Base need changes for each action, before seed-driven bonuses. */
 const BASE_EFFECTS: Record<EventType, Partial<Needs>> = {
   feed: { fullness: 35, joy: 4 },
-  play: { joy: 30, energy: -15, bond: 5 },
+  play: { joy: 12, energy: -15, bond: 5 },
   clean: { hygiene: 40 },
   talk: { bond: 18, joy: 6 },
 };
+
+/**
+ * Joy from real accomplishment — finishing a task you were handed, or fulfilling
+ * a goal you set yourself. This, not play, is the creature's main source of
+ * lasting joy: it grows happiest by solving problems and reaching its own goals.
+ * Kept deliberately above play's momentary lift (even a favourite game) so that
+ * accomplishment, not entertainment, is what truly makes it joyful.
+ */
+export const ACCOMPLISHMENT_JOY = { task: 40, goal: 35 } as const;
 
 /** Extra boost when an action hits one of the creature's likes. */
 const LIKE_BONUS = 15;

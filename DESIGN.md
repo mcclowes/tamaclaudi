@@ -87,7 +87,7 @@ set, trim later:
 | `fulfillment` | steadily | Successfully helping @mcclowes | Seeks ways to be able to be helpful |
 | `happiness` | steadily | doing things it finds fun (specific on pet seed) | writes sad poetry in markdown files on device |
 | `energy` | with activity, restores in sleep | rest, sleep | crankiness, refuses to play |
-| `joy` | slowly | play, talk, favourite things | withdrawn, sad diary entries |
+| `joy` | slowly | mainly solving problems & reaching goals (`task-done`, `goal-done`); a smaller lift from play, talk, favourite things | withdrawn, sad diary entries |
 | `bond` | very slowly | attention of any kind | doesn't trust you, slow to grow |
 
 Decay rates scale by life stage. A baby's `fullness` falls fast and it can't self-soothe;
