@@ -58,4 +58,12 @@ describe("applyEvent", () => {
     const full = { ...startingNeeds(), fullness: 95 };
     expect(applyEvent(full, ev("feed", "berries"), seed).fullness).toBe(100);
   });
+
+  it("a disliked food near a full belly only loses its dislike penalty, not extra from an early clamp", () => {
+    // base feed +35, dislike penalty -round(35/2)=-18, so net +17.
+    // From 95 the net carries it to the cap; an early clamp on the +35 would
+    // wrongly shave the penalty off 100 and land at 82.
+    const nearFull = { ...startingNeeds(), fullness: 95 };
+    expect(applyEvent(nearFull, ev("feed", "broccoli"), seed).fullness).toBe(100);
+  });
 });

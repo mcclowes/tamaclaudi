@@ -36,28 +36,34 @@ function likeFor(type: EventType, seed: Seed) {
  * Pure — returns fresh needs.
  */
 export function applyEvent(needs: Needs, event: CreatureEvent, seed: Seed): Needs {
-  let next = { ...needs };
-
   const base = BASE_EFFECTS[event.type];
-  for (const [name, delta] of Object.entries(base)) {
-    next = applyDelta(next, name as keyof Needs, delta as number);
-  }
-
   const { likes, dislikes } = likeFor(event.type, seed);
   const primary = primaryNeed(event.type);
 
+  // Accumulate every adjustment into one delta per need, then clamp exactly
+  // once. Clamping each step separately lets an intermediate cap swallow more
+  // than the intended penalty when a need is already near 0 or 100.
+  const delta: Partial<Record<keyof Needs, number>> = { ...base };
+  const add = (name: keyof Needs, d: number) => {
+    delta[name] = (delta[name] ?? 0) + d;
+  };
+
   if (matchesList(event.arg, likes)) {
-    next = applyDelta(next, primary, LIKE_BONUS);
-    next = applyDelta(next, "joy", 6);
+    add(primary, LIKE_BONUS);
+    add("joy", 6);
   } else if (matchesList(event.arg, dislikes)) {
-    next = applyDelta(next, primary, -Math.round((base[primary] ?? 0) / 2));
-    next = applyDelta(next, "joy", -8);
+    add(primary, -Math.round((base[primary] ?? 0) / 2));
+    add("joy", -8);
   }
 
   if (event.type === seed.loveLanguage) {
-    next = applyDelta(next, "bond", LOVE_LANGUAGE_BONUS);
+    add("bond", LOVE_LANGUAGE_BONUS);
   }
 
+  let next = { ...needs };
+  for (const [name, d] of Object.entries(delta)) {
+    next = applyDelta(next, name as keyof Needs, d as number);
+  }
   return next;
 }
 

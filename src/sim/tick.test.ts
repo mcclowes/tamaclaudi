@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { advance } from "./tick.js";
-import { startingNeeds } from "./stats.js";
+import { startingNeeds, decayNeeds } from "./stats.js";
+import { stageMultiplier } from "./stages.js";
 import { DEFAULT_CONFIG, type Config, type Seed, type Stats } from "../types.js";
 
 const seed: Seed = {
@@ -116,6 +117,35 @@ describe("advance", () => {
     const snapshot = JSON.parse(JSON.stringify(stats));
     advance(stats, seed, [], new Date("2026-06-08T05:00:00Z"), DEFAULT_CONFIG);
     expect(stats).toEqual(snapshot);
+  });
+
+  it("decays each slice of a stage-straddling gap at its own stage's rate", () => {
+    // Gap runs day 4.916 (child) -> day 5.083 (teen): 2h child + 2h teen.
+    // The old code decayed the whole 4h at the end stage (teen), under-decaying
+    // the child slice. The split should land strictly between the two single-
+    // rate computations of the full gap.
+    const stats: Stats = {
+      bornAt: "2026-06-01T00:00:00Z",
+      lastTick: "2026-06-05T22:00:00Z",
+      stage: "child",
+      health: "well",
+      needs: startingNeeds(),
+      ailingSince: null,
+    };
+    const { state } = advance(
+      stats,
+      seed,
+      [],
+      new Date("2026-06-06T02:00:00Z"),
+      DEFAULT_CONFIG,
+    );
+
+    const allTeen = decayNeeds(startingNeeds(), 4, stageMultiplier("teen"));
+    const allChild = decayNeeds(startingNeeds(), 4, stageMultiplier("child"));
+
+    // More decay than pure-teen (child slice is faster), less than pure-child.
+    expect(state.needs.hygiene).toBeLessThan(allTeen.hygiene);
+    expect(state.needs.hygiene).toBeGreaterThan(allChild.hygiene);
   });
 
   it("can kill after long neglect under realStakes", () => {

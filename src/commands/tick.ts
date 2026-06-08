@@ -1,4 +1,5 @@
 import { advance } from "../sim/tick.js";
+import { ageDays, stageForAge } from "../sim/stages.js";
 import {
   drainEvents,
   readConfig,
@@ -23,7 +24,11 @@ export function tick(ctx: CommandContext): string {
     return "tick: the creature has died. The body no longer moves.";
   }
 
-  const events = drainEvents(ctx.p);
+  // An egg has no needs yet, so anything queued before it hatches would be
+  // spent for nothing. Leave the inbox untouched while still an egg; the events
+  // wait and are drained on the first tick after hatching.
+  const stillEgg = stageForAge(ageDays(stats.bornAt, ctx.now)) === "egg";
+  const events = stillEgg ? [] : drainEvents(ctx.p);
   const { state, changes } = advance(stats, seed, events, ctx.now, config);
   writeStats(state, ctx.p);
 
