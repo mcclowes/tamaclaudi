@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+
+# The live creature is a local save, not source. Ignore by default;
+# remove this line if you want to version-control your pet.
+/creature/
