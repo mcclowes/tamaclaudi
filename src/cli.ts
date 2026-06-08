@@ -10,6 +10,7 @@ import {
   proposals,
   approve,
   deny,
+  resolve,
   questions,
   answer,
 } from "./commands/agency.js";
@@ -35,6 +36,7 @@ Usage: tama <command> [args]
   proposals [--all]      external actions it wants to take (default: open ones)
   approve <id>           approve a proposal; the loop may then run it
   deny <id>              decline a proposal
+  resolve <id> "..."     (soul) record an approved proposal's outcome, mark done
   questions [--all]      questions it has asked you (default: unanswered)
   answer <id> "..."      answer a question
   propose "..." [--why .. --cmd ..]   (soul) file an external action for approval
@@ -121,6 +123,8 @@ function run(argv: string[]): string {
       return approve(positional[0], ctx);
     case "deny":
       return deny(positional[0], ctx);
+    case "resolve":
+      return resolve(positional[0], positional.slice(1).join(" ") || undefined, ctx);
     case "questions":
       return questions(ctx, flags.has("all"));
     case "answer":

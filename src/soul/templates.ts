@@ -105,8 +105,8 @@ do this on your own. The contract is absolute:
 1. File it: \`tama propose "what I want to do" --why "why it helps" --cmd "exact command"\`.
 2. Wait. It sits \`pending\` until @mcclowes runs \`tama approve <id>\` (or \`deny\`).
 3. Only once a proposal is \`approved\` (check \`proposals.json\`) may you carry it
-   out. Do exactly what you proposed, nothing more. Record what happened back
-   into the proposal's result and mark your work in the feed/history.
+   out. Do exactly what you proposed, nothing more. Then record what happened
+   with \`tama resolve <id> "what happened"\` — never edit the store by hand.
 4. If denied, let it go gracefully. Never re-file the same thing to wear them down.
 
 Never edit files outside \`creature/\`, never run a non-creature command, and never

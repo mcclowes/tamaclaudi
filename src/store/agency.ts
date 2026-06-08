@@ -55,6 +55,24 @@ export function setProposalStatus(
   return found;
 }
 
+/** Record the outcome of an approved proposal and mark it done. */
+export function resolveProposal(
+  id: string,
+  result: string,
+  p: CreaturePaths = paths(),
+): Proposal {
+  const items = readProposals(p);
+  const found = items.find((x) => x.id === id);
+  if (!found) throw new Error(`No proposal with id ${id}.`);
+  if (found.status !== "approved") {
+    throw new Error(`Proposal ${id} is ${found.status}, not approved — can't resolve it.`);
+  }
+  found.status = "done";
+  found.result = result;
+  writeProposals(items, p);
+  return found;
+}
+
 // --- questions -------------------------------------------------------------
 
 export function readQuestions(p: CreaturePaths = paths()): Question[] {

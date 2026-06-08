@@ -3,6 +3,7 @@ import {
   addProposal,
   readProposals,
   setProposalStatus,
+  resolveProposal,
   addQuestion,
   readQuestions,
   answerQuestion,
@@ -62,6 +63,18 @@ export function deny(id: string | undefined, ctx: CommandContext): string {
   if (!id) throw new Error("`tama deny` needs a proposal id, e.g. tama deny p1");
   const p = setProposalStatus(id, "denied", ctx.p);
   return `🚫 denied ${p.id}: ${p.action}`;
+}
+
+/** The loop calls this after carrying out an approved proposal. */
+export function resolve(
+  id: string | undefined,
+  result: string | undefined,
+  ctx: CommandContext,
+): string {
+  if (!id) throw new Error('`tama resolve` needs an id and a result: tama resolve p1 "what happened"');
+  if (!result || !result.trim()) throw new Error("`tama resolve` needs a result.");
+  const p = resolveProposal(id, result, ctx.p);
+  return `📌 resolved ${p.id}: ${p.result}`;
 }
 
 export function questions(ctx: CommandContext, all = false): string {

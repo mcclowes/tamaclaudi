@@ -11,6 +11,7 @@ import {
   proposals,
   approve,
   deny,
+  resolve,
   questions,
   answer,
 } from "./agency.js";
@@ -52,6 +53,20 @@ describe("proposals", () => {
 
   it("approve needs an id", () => {
     expect(() => approve(undefined, at("x"))).toThrow(/needs a proposal id/);
+  });
+
+  it("resolves an approved proposal, recording the result", () => {
+    propose({ action: "do a thing" }, at("2026-06-08T01:00:00Z"));
+    approve("p1", at("2026-06-08T02:00:00Z"));
+    resolve("p1", "did the thing, all good", at("2026-06-08T03:00:00Z"));
+    const stored = readProposals(p);
+    expect(stored[0]!.status).toBe("done");
+    expect(stored[0]!.result).toMatch(/all good/);
+  });
+
+  it("won't resolve a proposal that isn't approved", () => {
+    propose({ action: "do a thing" }, at("2026-06-08T01:00:00Z"));
+    expect(() => resolve("p1", "snuck it through", at("x"))).toThrow(/not approved/);
   });
 });
 
