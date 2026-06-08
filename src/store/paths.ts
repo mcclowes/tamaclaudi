@@ -22,6 +22,7 @@ export interface CreaturePaths {
   historyDir: string;
   proposals: string;
   questions: string;
+  tasks: string;
   /** Where the soul builds its mind — real artifacts it owns. */
   knowledgeDir: string;
   skillsDir: string;
@@ -41,6 +42,7 @@ export function paths(dir = creatureDir()): CreaturePaths {
     historyDir: join(dir, "history"),
     proposals: join(dir, "proposals.json"),
     questions: join(dir, "questions.json"),
+    tasks: join(dir, "tasks.json"),
     knowledgeDir: join(dir, "knowledge"),
     skillsDir: join(dir, "skills"),
     workshopDir: join(dir, "workshop"),

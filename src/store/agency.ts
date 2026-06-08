@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import type { Proposal, Question } from "../types.js";
+import type { Proposal, Question, Task } from "../types.js";
 import { paths, type CreaturePaths } from "./paths.js";
 
 function readArray<T>(file: string): T[] {
@@ -107,5 +107,61 @@ export function answerQuestion(
   found.answer = answer;
   found.answeredAt = at;
   writeQuestions(items, p);
+  return found;
+}
+
+// --- tasks (problems you hand the creature) --------------------------------
+
+export function readTasks(p: CreaturePaths = paths()): Task[] {
+  return readArray<Task>(p.tasks);
+}
+
+export function writeTasks(items: Task[], p: CreaturePaths = paths()): void {
+  writeArray(p.tasks, items);
+}
+
+export function addTask(text: string, at: string, p: CreaturePaths = paths()): Task {
+  const items = readTasks(p);
+  const task: Task = { id: nextId(items, "t"), at, text, status: "open", notes: [] };
+  items.push(task);
+  writeTasks(items, p);
+  return task;
+}
+
+function findTask(items: Task[], id: string): Task {
+  const found = items.find((x) => x.id === id);
+  if (!found) throw new Error(`No task with id ${id}.`);
+  return found;
+}
+
+/** The soul logs progress on a task, moving it to 'working'. */
+export function noteTask(
+  id: string,
+  note: string,
+  at: string,
+  p: CreaturePaths = paths(),
+): Task {
+  const items = readTasks(p);
+  const found = findTask(items, id);
+  if (found.status === "done") throw new Error(`Task ${id} is already done.`);
+  found.status = "working";
+  found.notes.push({ at, text: note });
+  writeTasks(items, p);
+  return found;
+}
+
+/** The soul closes a task with an outcome. */
+export function finishTask(
+  id: string,
+  outcome: string,
+  at: string,
+  p: CreaturePaths = paths(),
+): Task {
+  const items = readTasks(p);
+  const found = findTask(items, id);
+  found.status = "done";
+  found.outcome = outcome;
+  found.notes.push({ at, text: `done: ${outcome}` });
+  writeTasks(items, p);
   return found;
 }

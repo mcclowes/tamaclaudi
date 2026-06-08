@@ -14,8 +14,12 @@ import {
   resolve,
   questions,
   answer,
+  task,
+  tasks,
+  taskNote,
+  taskDone,
 } from "./agency.js";
-import { readProposals, readQuestions } from "../store/agency.js";
+import { readProposals, readQuestions, readTasks } from "../store/agency.js";
 
 let dir: string;
 let p: CreaturePaths;
@@ -84,5 +88,42 @@ describe("questions", () => {
 
   it("ask needs text", () => {
     expect(() => ask(undefined, at("x"))).toThrow(/needs a question/);
+  });
+});
+
+describe("tasks", () => {
+  it("files a problem the creature can work on", () => {
+    task("improve the codebase", at("2026-06-08T01:00:00Z"));
+    const stored = readTasks(p);
+    expect(stored).toHaveLength(1);
+    expect(stored[0]!.id).toBe("t1");
+    expect(stored[0]!.status).toBe("open");
+    expect(tasks(at("x"))).toMatch(/improve the codebase/);
+  });
+
+  it("progresses through working to done, recording notes", () => {
+    task("write more tests", at("2026-06-08T01:00:00Z"));
+    taskNote("t1", "added 6 tests for the tick function", at("2026-06-08T02:00:00Z"));
+    let stored = readTasks(p);
+    expect(stored[0]!.status).toBe("working");
+    expect(stored[0]!.notes).toHaveLength(1);
+
+    taskDone("t1", "coverage is solid now", at("2026-06-08T03:00:00Z"));
+    stored = readTasks(p);
+    expect(stored[0]!.status).toBe("done");
+    expect(stored[0]!.outcome).toMatch(/solid/);
+    // done tasks drop out of the open view
+    expect(tasks(at("x"))).toMatch(/no open tasks/);
+    expect(tasks(at("x"), true)).toMatch(/write more tests/);
+  });
+
+  it("won't note a task that's already done", () => {
+    task("a thing", at("2026-06-08T01:00:00Z"));
+    taskDone("t1", "done", at("2026-06-08T02:00:00Z"));
+    expect(() => taskNote("t1", "more", at("2026-06-08T03:00:00Z"))).toThrow(/already done/);
+  });
+
+  it("task needs text", () => {
+    expect(() => task(undefined, at("x"))).toThrow(/needs a problem/);
   });
 });

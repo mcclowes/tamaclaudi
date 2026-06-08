@@ -81,6 +81,22 @@ export interface Proposal {
   result?: string; // filled in by the loop once executed
 }
 
+export type TaskStatus = "open" | "working" | "done";
+
+/**
+ * A problem @mcclowes hands the creature to work on. Unlike a one-off `talk`,
+ * a task is a standing goal the soul pursues across ticks — building in its
+ * pen and proposing external actions as needed — until it's done.
+ */
+export interface Task {
+  id: string;
+  at: string; // ISO
+  text: string;
+  status: TaskStatus;
+  notes: { at: string; text: string }[];
+  outcome?: string;
+}
+
 /** A genuine question the creature has for you, and your eventual answer. */
 export interface Question {
   id: string;

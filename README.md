@@ -80,8 +80,26 @@ inside its own pen:
 - `creature/skills/` — reusable playbooks it writes for helping you.
 - `creature/workshop/` — working tools and scripts it builds and tests.
 
-It can also reach beyond the pen, but only with your say-so. Nothing outside `creature/`
-happens until you approve it:
+### Hand it a problem
+
+`tama talk` is a passing remark. A task is a standing goal you hand the creature to
+work on across ticks until it's done:
+
+```bash
+tama task "improve the codebase"   # pose a problem
+tama tasks                         # see what it's working on and its progress notes
+```
+
+Each tick the creature picks up open tasks ahead of its own pottering, makes real
+progress in `workshop/`/`knowledge/`/`skills/`, logs notes (`tama task-note`), and
+closes them out (`tama task-done`). A task is also the usual reason it proposes an
+external action: when progress needs something outside the pen, it files a proposal and
+waits for you.
+
+### Acting beyond the pen
+
+It can reach outside `creature/`, but only with your say-so. Nothing happens until you
+approve it:
 
 ```bash
 tama proposals          # external actions it wants to take
@@ -112,6 +130,6 @@ The split that matters: `src/` never calls an LLM, and `creature/` is never writ
 simulation logic. That keeps the body honest and the soul free.
 
 ```bash
-npm test         # vitest, 54 tests
+npm test         # vitest, 60 tests
 npm run typecheck
 ```

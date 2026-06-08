@@ -13,6 +13,10 @@ import {
   resolve,
   questions,
   answer,
+  task,
+  tasks,
+  taskNote,
+  taskDone,
 } from "./commands/agency.js";
 
 const HELP = `tamaclaudie — raise a creature in your terminal
@@ -31,6 +35,12 @@ Usage: tama <command> [args]
   tick             advance the body (the soul loop calls this; you can too)
   listen           print what it's saying to you (feed.md)
   diary [date]     print a history page (default: today, YYYY-MM-DD)
+
+ hand it a problem to work on:
+  task "..."             give the creature a problem to pursue across ticks
+  tasks [--all]          list tasks (default: open ones)
+  task-note <id> "..."   (soul) log progress on a task
+  task-done <id> "..."   (soul) close a task with an outcome
 
  the creature's agency (the soul files these; you adjudicate):
   proposals [--all]      external actions it wants to take (default: open ones)
@@ -129,6 +139,14 @@ function run(argv: string[]): string {
       return questions(ctx, flags.has("all"));
     case "answer":
       return answer(positional[0], positional.slice(1).join(" ") || undefined, ctx);
+    case "task":
+      return task(positional.join(" ") || undefined, ctx);
+    case "tasks":
+      return tasks(ctx, flags.has("all"));
+    case "task-note":
+      return taskNote(positional[0], positional.slice(1).join(" ") || undefined, ctx);
+    case "task-done":
+      return taskDone(positional[0], positional.slice(1).join(" ") || undefined, ctx);
     case "propose":
       return propose(
         { action: positional.join(" "), why: strFlag(flags, "why"), command: strFlag(flags, "cmd") },
