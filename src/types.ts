@@ -64,6 +64,32 @@ export interface CreatureEvent {
   arg?: string;
 }
 
+export type ProposalStatus = "pending" | "approved" | "denied" | "done";
+
+/**
+ * An action the creature wants to take *outside* its own creature/ pen. It does
+ * nothing until @mcclowes approves it; the loop then runs it and records the
+ * result. This is the whole "acts independently, with approval" contract.
+ */
+export interface Proposal {
+  id: string;
+  at: string; // ISO
+  action: string; // plain-language what it wants to do
+  why?: string; // why it thinks this helps
+  command?: string; // the exact command/plan it would run, if any
+  status: ProposalStatus;
+  result?: string; // filled in by the loop once executed
+}
+
+/** A genuine question the creature has for you, and your eventual answer. */
+export interface Question {
+  id: string;
+  at: string; // ISO
+  text: string;
+  answer?: string;
+  answeredAt?: string; // ISO
+}
+
 export interface Config {
   /** When true, sustained neglect can actually kill. Default false (forgiving). */
   realStakes: boolean;

@@ -17,8 +17,15 @@ export interface CreaturePaths {
   events: string;
   feed: string;
   claudeMd: string;
+  tickMd: string;
   config: string;
   historyDir: string;
+  proposals: string;
+  questions: string;
+  /** Where the soul builds its mind — real artifacts it owns. */
+  knowledgeDir: string;
+  skillsDir: string;
+  workshopDir: string;
 }
 
 export function paths(dir = creatureDir()): CreaturePaths {
@@ -29,8 +36,14 @@ export function paths(dir = creatureDir()): CreaturePaths {
     events: join(dir, "events.jsonl"),
     feed: join(dir, "feed.md"),
     claudeMd: join(dir, "CLAUDE.md"),
+    tickMd: join(dir, "TICK.md"),
     config: join(dir, "config.json"),
     historyDir: join(dir, "history"),
+    proposals: join(dir, "proposals.json"),
+    questions: join(dir, "questions.json"),
+    knowledgeDir: join(dir, "knowledge"),
+    skillsDir: join(dir, "skills"),
+    workshopDir: join(dir, "workshop"),
   };
 }
 

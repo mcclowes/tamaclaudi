@@ -37,6 +37,14 @@ export function exists(p: CreaturePaths = paths()): boolean {
 export function ensureDirs(p: CreaturePaths = paths()): void {
   mkdirSync(p.dir, { recursive: true });
   mkdirSync(p.historyDir, { recursive: true });
+  // The creature's mind: where it builds real, usable artifacts it owns.
+  mkdirSync(p.knowledgeDir, { recursive: true });
+  mkdirSync(p.skillsDir, { recursive: true });
+  mkdirSync(p.workshopDir, { recursive: true });
+}
+
+export function writeTickMd(text: string, p: CreaturePaths = paths()): void {
+  writeFileSync(p.tickMd, text.endsWith("\n") ? text : text + "\n", "utf8");
 }
 
 export function readSeed(p: CreaturePaths = paths()): Seed {

@@ -4,6 +4,15 @@ import { init } from "./commands/init.js";
 import { tick } from "./commands/tick.js";
 import { queueAction } from "./commands/actions.js";
 import { status, listen, diary } from "./commands/read.js";
+import {
+  propose,
+  ask,
+  proposals,
+  approve,
+  deny,
+  questions,
+  answer,
+} from "./commands/agency.js";
 
 const HELP = `tamaclaudie — raise a creature in your terminal
 
@@ -21,8 +30,21 @@ Usage: tama <command> [args]
   tick             advance the body (the soul loop calls this; you can too)
   listen           print what it's saying to you (feed.md)
   diary [date]     print a history page (default: today, YYYY-MM-DD)
+
+ the creature's agency (the soul files these; you adjudicate):
+  proposals [--all]      external actions it wants to take (default: open ones)
+  approve <id>           approve a proposal; the loop may then run it
+  deny <id>              decline a proposal
+  questions [--all]      questions it has asked you (default: unanswered)
+  answer <id> "..."      answer a question
+  propose "..." [--why .. --cmd ..]   (soul) file an external action for approval
+  ask "..."              (soul) ask @mcclowes a question
+
   help             show this
 `;
+
+/** Flags that consume the following argument as their value. */
+const VALUE_FLAGS = new Set(["seed", "why", "cmd"]);
 
 /** Pull `--flag` and `--flag value` out of args, returning the rest. */
 function parseFlags(args: string[]): { positional: string[]; flags: Map<string, string | true> } {
@@ -33,7 +55,7 @@ function parseFlags(args: string[]): { positional: string[]; flags: Map<string, 
     if (a.startsWith("--")) {
       const key = a.slice(2);
       const next = args[i + 1];
-      if (key === "seed" && next !== undefined) {
+      if (VALUE_FLAGS.has(key) && next !== undefined) {
         flags.set(key, next);
         i++;
       } else {
@@ -44,6 +66,11 @@ function parseFlags(args: string[]): { positional: string[]; flags: Map<string, 
     }
   }
   return { positional, flags };
+}
+
+function strFlag(flags: Map<string, string | true>, key: string): string | undefined {
+  const v = flags.get(key);
+  return typeof v === "string" ? v : undefined;
 }
 
 function run(argv: string[]): string {
@@ -87,6 +114,24 @@ function run(argv: string[]): string {
       return listen(ctx);
     case "diary":
       return diary(positional[0], ctx);
+
+    case "proposals":
+      return proposals(ctx, flags.has("all"));
+    case "approve":
+      return approve(positional[0], ctx);
+    case "deny":
+      return deny(positional[0], ctx);
+    case "questions":
+      return questions(ctx, flags.has("all"));
+    case "answer":
+      return answer(positional[0], positional.slice(1).join(" ") || undefined, ctx);
+    case "propose":
+      return propose(
+        { action: positional.join(" "), why: strFlag(flags, "why"), command: strFlag(flags, "cmd") },
+        ctx,
+      );
+    case "ask":
+      return ask(positional.join(" ") || undefined, ctx);
 
     default:
       throw new Error(`Unknown command: ${command}\n\n${HELP}`);

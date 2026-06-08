@@ -9,8 +9,9 @@ import {
   writeConfig,
   writeFeed,
   writeClaudeMd,
+  writeTickMd,
 } from "../store/io.js";
-import { initialClaudeMd, initialFeed } from "../soul/templates.js";
+import { initialClaudeMd, initialFeed, tickMd } from "../soul/templates.js";
 import type { CommandContext } from "./context.js";
 
 export interface InitOptions {
@@ -49,6 +50,7 @@ export function init(opts: InitOptions, ctx: CommandContext): string {
   writeStats(stats, ctx.p);
   writeConfig({ ...DEFAULT_CONFIG, realStakes: opts.realStakes ?? false }, ctx.p);
   writeClaudeMd(initialClaudeMd(seed, stats), ctx.p);
+  writeTickMd(tickMd(), ctx.p);
   writeFeed(initialFeed(seed), ctx.p);
 
   return [

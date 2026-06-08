@@ -1,0 +1,85 @@
+import { readStats } from "../store/io.js";
+import {
+  addProposal,
+  readProposals,
+  setProposalStatus,
+  addQuestion,
+  readQuestions,
+  answerQuestion,
+} from "../store/agency.js";
+import type { Proposal } from "../types.js";
+import type { CommandContext } from "./context.js";
+
+// --- the soul's side: propose an external action, ask a question -----------
+
+export interface ProposeOptions {
+  action: string;
+  why?: string;
+  command?: string;
+}
+
+export function propose(opts: ProposeOptions, ctx: CommandContext): string {
+  readStats(ctx.p); // ensure a creature exists
+  if (!opts.action.trim()) throw new Error("`tama propose` needs an action.");
+  const proposal = addProposal(
+    { at: ctx.now.toISOString(), action: opts.action, why: opts.why, command: opts.command },
+    ctx.p,
+  );
+  return `📨 proposal ${proposal.id} filed (pending your approval): ${proposal.action}`;
+}
+
+export function ask(text: string | undefined, ctx: CommandContext): string {
+  readStats(ctx.p);
+  if (!text || !text.trim()) throw new Error('`tama ask` needs a question.');
+  const q = addQuestion(text, ctx.now.toISOString(), ctx.p);
+  return `❓ question ${q.id} filed: ${q.text}`;
+}
+
+// --- your side: review, approve/deny, answer -------------------------------
+
+function renderProposal(p: Proposal): string {
+  const lines = [`[${p.id}] (${p.status}) ${p.action}`];
+  if (p.why) lines.push(`     why: ${p.why}`);
+  if (p.command) lines.push(`     cmd: ${p.command}`);
+  if (p.result) lines.push(`     result: ${p.result}`);
+  return lines.join("\n");
+}
+
+export function proposals(ctx: CommandContext, all = false): string {
+  const items = readProposals(ctx.p);
+  const show = all ? items : items.filter((p) => p.status === "pending" || p.status === "approved");
+  if (!show.length) return all ? "(no proposals)" : "(no open proposals)";
+  return show.map(renderProposal).join("\n\n");
+}
+
+export function approve(id: string | undefined, ctx: CommandContext): string {
+  if (!id) throw new Error("`tama approve` needs a proposal id, e.g. tama approve p1");
+  const p = setProposalStatus(id, "approved", ctx.p);
+  return `✅ approved ${p.id}: ${p.action}\n   The loop will carry it out on its next tick.`;
+}
+
+export function deny(id: string | undefined, ctx: CommandContext): string {
+  if (!id) throw new Error("`tama deny` needs a proposal id, e.g. tama deny p1");
+  const p = setProposalStatus(id, "denied", ctx.p);
+  return `🚫 denied ${p.id}: ${p.action}`;
+}
+
+export function questions(ctx: CommandContext, all = false): string {
+  const items = readQuestions(ctx.p);
+  const show = all ? items : items.filter((q) => !q.answer);
+  if (!show.length) return all ? "(no questions)" : "(no open questions)";
+  return show
+    .map((q) => `[${q.id}] ${q.text}${q.answer ? `\n     → ${q.answer}` : ""}`)
+    .join("\n\n");
+}
+
+export function answer(
+  id: string | undefined,
+  text: string | undefined,
+  ctx: CommandContext,
+): string {
+  if (!id) throw new Error('`tama answer` needs an id and text: tama answer q1 "..."');
+  if (!text || !text.trim()) throw new Error("`tama answer` needs an answer.");
+  const q = answerQuestion(id, text, ctx.now.toISOString(), ctx.p);
+  return `💡 answered ${q.id}. It'll take it in on the next tick.`;
+}
