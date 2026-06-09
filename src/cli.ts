@@ -5,6 +5,7 @@ import { init } from "./commands/init.js";
 import { tick } from "./commands/tick.js";
 import { queueAction } from "./commands/actions.js";
 import { status, listen, diary } from "./commands/read.js";
+import { watch } from "./commands/watch.js";
 import {
   propose,
   ask,
@@ -34,6 +35,7 @@ Usage: tama <command> [args]
        --real-stakes   neglect can be fatal (default: forgiving)
        --force         replace an existing creature (permanent)
   status           mechanical truth: needs, age, stage, health
+  watch            live dashboard: the pet, what it's saying, what needs you
   feed [food]      raise fullness; a favourite food raises more
   play [game]      raise joy, costs energy
   clean            raise hygiene
@@ -126,6 +128,8 @@ export function run(argv: string[], ctx: CommandContext = defaultContext()): str
 
     case "status":
       return status(ctx);
+    case "watch":
+      return watch(ctx);
     case "feed":
       return queueAction("feed", positional[0], ctx);
     case "play":

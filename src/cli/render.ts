@@ -3,7 +3,7 @@ import { ageDays } from "../sim/stages.js";
 import { creatureArt } from "./art.js";
 import type { TickChanges } from "../sim/tick.js";
 
-function bar(value: number, width = 12): string {
+export function bar(value: number, width = 12): string {
   const filled = Math.round((value / 100) * width);
   return "█".repeat(filled) + "░".repeat(width - filled);
 }

@@ -37,6 +37,7 @@ tama init [name]      lay an egg and roll a personality
      --real-stakes      neglect can be fatal (default: forgiving)
      --force            replace an existing creature (permanent)
 tama status           mechanical truth: needs, age, stage, health
+tama watch            live dashboard: the pet, what it's saying, what needs you
 tama feed [food]      raise fullness; a favourite food raises more
 tama play [game]      raise joy, costs energy
 tama clean            raise hygiene
@@ -49,6 +50,21 @@ tama diary [date]     print a history page (default: today)
 Commands other than `tick` and `status` just append an event to the inbox and confirm.
 The body feels it on the next tick, the soul reacts the tick after. So you feed it, and
 a minute later it thanks you. That small delay is intentional.
+
+## Watching it live
+
+The loop's own output is Claude Code's tool-call transcript — useful for debugging, not
+for *seeing your pet*. For that, open a live dashboard in its own pane:
+
+```bash
+tama watch
+```
+
+It draws the creature, its needs, the latest thing it's said (`feed.md`), and — the
+reason to leave it open — a **needs you** panel listing anything waiting on you: pending
+proposals to approve and questions to answer. The frame repaints whenever a body file
+changes, so it updates the moment a tick lands. It's read-only by design; you act with
+`tama approve` / `tama deny` / `tama answer` in another pane.
 
 ## Bringing it to life: the soul loop
 
