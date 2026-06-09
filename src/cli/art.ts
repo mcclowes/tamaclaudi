@@ -7,15 +7,19 @@ import { NEEDS, type Stats } from "../types.js";
  */
 export type Expression = "happy" | "content" | "neutral" | "sad" | "sleepy" | "sick" | "dead";
 
-/** Eyes and mouth are each exactly 3 characters wide so the art stays aligned. */
+/**
+ * Eyes and mouth are each exactly 5 characters wide so the art stays aligned in
+ * the bigger rounded body below. The wider face leaves room for real detail —
+ * a proper grin, droopy lids, a queasy wobble.
+ */
 const FACES: Record<Expression, { eyes: string; mouth: string }> = {
-  happy: { eyes: "^ ^", mouth: " u " },
-  content: { eyes: "o o", mouth: " u " },
-  neutral: { eyes: "o o", mouth: " - " },
-  sad: { eyes: ". .", mouth: " n " },
-  sleepy: { eyes: "- -", mouth: " o " },
-  sick: { eyes: "@ @", mouth: " ~ " },
-  dead: { eyes: "x x", mouth: " _ " },
+  happy: { eyes: "^   ^", mouth: "\\___/" },
+  content: { eyes: "o   o", mouth: " \\_/ " },
+  neutral: { eyes: "o   o", mouth: " --- " },
+  sad: { eyes: "u   u", mouth: " /^\\ " },
+  sleepy: { eyes: "-   -", mouth: " ~~~ " },
+  sick: { eyes: "@   @", mouth: " mmm " },
+  dead: { eyes: "x   x", mouth: " ___ " },
 };
 
 function mean(stats: Stats): number {
@@ -35,32 +39,46 @@ export function expressionFor(stats: Stats): Expression {
   return "neutral";
 }
 
-/** The two-line face core every post-egg stage is built around. */
-function faceCore(expr: Expression): [string, string] {
+/**
+ * The rounded body every post-egg stage shares: a domed head, an eyes row, a
+ * mouth row, and a chin. Each line is built on the 11-wide body so stages can
+ * hang feet under it and arms off its sides without the columns drifting.
+ */
+function roundBody(expr: Expression): string[] {
   const f = FACES[expr];
-  return [`( ${f.eyes} )`, `( ${f.mouth} )`];
+  return [
+    "  .---------.",
+    `  |  ${f.eyes}  |`,
+    `  |  ${f.mouth}  |`,
+    "  '---------'",
+  ];
 }
 
 /**
- * Each stage wraps the face core in a little more body — the egg is sealed, the
- * baby is bare, and they sprout feet, arms, and an antenna as they grow up.
+ * Each stage wraps that body in a little more of itself — the egg is sealed and
+ * featureless, the baby is just a face, and they sprout feet, then arms, then a
+ * sensing antenna as they grow up.
  */
 function bodyArt(stage: Stats["stage"], expr: Expression): string[] {
-  const [eyes, mouth] = faceCore(expr);
+  const [top, eyes, mouth, bottom] = roundBody(expr);
 
   switch (stage) {
     case "egg":
       return expr === "dead"
-        ? ["   .--.", "  / /\\ \\", " |  \\/  |", " | /\\   |", "  \\    /", "   '--'"]
-        : ["   .--.", "  / .  \\", " |  .:  |", " | :.   |", "  \\  .  /", "   '--'"];
+        ? ["    .-----.", "   / x   x \\", "  | cracked |", "  |  . open |", "   \\   .   /", "    '-----'"]
+        : ["    .-----.", "   /  . :  \\", "  |  :   .  |", "  |   . :   |", "   \\  :.   /", "    '-----'"];
     case "baby":
-      return ["  .-----.", `  ${eyes}`, `  ${mouth}`, "  '-----'"];
+      // Bare and small: just the face, no limbs to coordinate yet.
+      return [top!, eyes!, mouth!, bottom!];
     case "child":
-      return ["  .-----.", `  ${eyes}`, `  ${mouth}`, "  '--+--'", "   / \\"];
+      // Stands on its own two feet.
+      return [top!, eyes!, mouth!, bottom!, "    _/   \\_"];
     case "teen":
-      return ["  .-----.", `\\_${eyes}`, `  ${mouth}_/`, "  '-----'"];
+      // Arms out, testing its reach; feet planted.
+      return [top!, eyes!, `\\_${mouth!.trimStart()}_/`, bottom!, "    /   \\"];
     case "adult":
-      return ["  \\ | /", "  .-----.", `  ${eyes}`, `  ${mouth}`, "  '-----'", "  /     \\"];
+      // A sensing antenna up top, arms, and a steady stance.
+      return ["      \\|/", "       o", top!, eyes!, `\\_${mouth!.trimStart()}_/`, bottom!, "    _/   \\_"];
   }
 }
 

@@ -51,19 +51,33 @@ describe("expressionFor", () => {
 describe("creatureArt", () => {
   it("draws a sealed egg with no face", () => {
     const art = creatureArt(stats({ stage: "egg" }));
-    expect(art).not.toContain("o o");
-    expect(art).toContain(".--.");
+    expect(art).not.toContain("o   o");
+    expect(art).toContain(".-----.");
   });
 
   it("shows the mood on its face once hatched", () => {
-    expect(creatureArt(stats({ stage: "baby", needs: needs({ joy: 90 }) }))).toContain("^ ^");
-    expect(creatureArt(stats({ stage: "baby", health: "dead" }))).toContain("x x");
+    expect(creatureArt(stats({ stage: "baby", needs: needs({ joy: 90 }) }))).toContain("^   ^");
+    expect(creatureArt(stats({ stage: "baby", health: "dead" }))).toContain("x   x");
   });
 
-  it("stays rectangular: every line is the same width per stage", () => {
+  it("draws a bigger rounded body once hatched", () => {
     for (const stage of ["baby", "child", "teen", "adult"] as const) {
-      const lines = creatureArt(stats({ stage })).split("\n");
-      expect(lines.length).toBeGreaterThan(1);
+      const art = creatureArt(stats({ stage }));
+      expect(art).toContain(".---------.");
+      expect(art).toContain("'---------'");
+    }
+  });
+
+  it("grows limbs with age: feet for a child, arms for a teen, an antenna for an adult", () => {
+    expect(creatureArt(stats({ stage: "baby" }))).not.toContain("_/   \\_");
+    expect(creatureArt(stats({ stage: "child" }))).toContain("_/   \\_");
+    expect(creatureArt(stats({ stage: "teen" }))).toContain("\\_");
+    expect(creatureArt(stats({ stage: "adult" }))).toContain("\\|/");
+  });
+
+  it("every stage still renders more than one line", () => {
+    for (const stage of ["baby", "child", "teen", "adult"] as const) {
+      expect(creatureArt(stats({ stage })).split("\n").length).toBeGreaterThan(1);
     }
   });
 });
