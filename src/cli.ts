@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { defaultContext, type CommandContext } from "./commands/context.js";
 import { init } from "./commands/init.js";
@@ -204,4 +205,20 @@ function main(): void {
   }
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main();
+/**
+ * True when this file is the process entrypoint. `process.argv[1]` may be a
+ * symlink (e.g. the `tama` bin npm drops in node's bin dir), while
+ * `import.meta.url` is always the resolved real path — so we resolve the
+ * symlink before comparing, or a globally installed `tama` runs nothing.
+ */
+function isEntrypoint(): boolean {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  try {
+    return realpathSync(entry) === fileURLToPath(import.meta.url);
+  } catch {
+    return false;
+  }
+}
+
+if (isEntrypoint()) main();
