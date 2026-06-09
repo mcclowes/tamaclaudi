@@ -5,7 +5,13 @@ import { join } from "node:path";
 import { paths, type CreaturePaths } from "../store/paths.js";
 import type { CommandContext } from "./context.js";
 import { init } from "./init.js";
-import { watch, handleKey, parseChatInput, completeChatInput } from "./watch.js";
+import {
+  watch,
+  handleKey,
+  parseChatInput,
+  completeChatInput,
+  chatSuggestions,
+} from "./watch.js";
 
 let dir: string;
 let p: CreaturePaths;
@@ -130,5 +136,22 @@ describe("completeChatInput", () => {
 
   it("leaves a non-command line untouched", () => {
     expect(completeChatInput("hello")).toBe("hello");
+  });
+});
+
+describe("chatSuggestions", () => {
+  it("lists every action right after `tama `", () => {
+    expect(chatSuggestions("tama ")).toEqual(["feed", "play", "clean", "rest", "talk"]);
+  });
+
+  it("narrows to actions matching the partial verb", () => {
+    expect(chatSuggestions("tama c")).toEqual(["clean"]);
+    expect(chatSuggestions("tama re")).toEqual(["rest"]);
+  });
+
+  it("is empty once past the verb or when not a command", () => {
+    expect(chatSuggestions("tama feed apple")).toEqual([]);
+    expect(chatSuggestions("hello")).toEqual([]);
+    expect(chatSuggestions("")).toEqual([]);
   });
 });

@@ -76,6 +76,19 @@ export function completeChatInput(input: string): string {
 }
 
 /**
+ * The live suggestion list shown as you type: while you're still on the verb
+ * right after `tama `, every action whose name matches the partial. Empty once
+ * you've moved past the verb or aren't typing a command, so plain chat stays
+ * uncluttered.
+ */
+export function chatSuggestions(input: string): ChatAction[] {
+  const m = /^tama\s+(\S*)$/i.exec(input);
+  if (!m) return [];
+  const partial = m[1]!.toLowerCase();
+  return CHAT_ACTIONS.filter((c) => c.startsWith(partial));
+}
+
+/**
  * Fold one keystroke into the chat buffer. Pure, so the editing rules — type,
  * backspace, send on Enter, clear on Escape, quit on Ctrl-C — are easy to test
  * without a terminal.
@@ -99,6 +112,8 @@ function chatFooter(input: string, status?: string): string {
   const lines = ["", rule("talk to it — or a command like `tama clean` (Tab completes)")];
   if (status) lines.push(`  ${status}`);
   lines.push(`  › ${input}`);
+  const suggestions = chatSuggestions(input);
+  if (suggestions.length) lines.push(`    ↹ ${suggestions.map((s) => `tama ${s}`).join("   ")}`);
   return lines.join("\n");
 }
 
