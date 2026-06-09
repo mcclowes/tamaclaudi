@@ -4,8 +4,8 @@ import { exists } from "../store/io.js";
 import { CreatureNotFoundError } from "../store/io.js";
 import type { CommandContext } from "./context.js";
 
-/** Clear the screen and park the cursor at the top-left. */
-const CLEAR = "\x1b[2J\x1b[H";
+/** Clear the screen and scrollback, then park the cursor at the top-left. */
+const CLEAR = "\x1b[2J\x1b[3J\x1b[H";
 
 export interface WatchOptions {
   /** Where frames go. Injectable so tests can capture them instead of the terminal. */
