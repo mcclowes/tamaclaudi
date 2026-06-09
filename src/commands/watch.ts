@@ -4,6 +4,7 @@ import { renderDashboard, rule } from "../cli/dashboard.js";
 import { exists } from "../store/io.js";
 import { CreatureNotFoundError } from "../store/io.js";
 import { queueAction } from "./actions.js";
+import { approve, deny } from "./agency.js";
 import type { CommandContext } from "./context.js";
 
 /** Clear the screen and scrollback, then park the cursor at the top-left. */
@@ -36,28 +37,41 @@ export interface KeyOutcome {
   exit?: boolean;
 }
 
-/** Actions you can drive straight from the chat line with a `tama <verb>`. */
+/** Care actions you can drive from the chat line; these queue for the next tick. */
 export const CHAT_ACTIONS = ["feed", "play", "clean", "rest", "talk"] as const;
 export type ChatAction = (typeof CHAT_ACTIONS)[number];
 
+/** Owner adjudication you can do from the chat line; these take a proposal id. */
+export const CHAT_AGENCY = ["approve", "deny"] as const;
+export type ChatAgency = (typeof CHAT_AGENCY)[number];
+
+/** Every verb the chat understands, for completion and live suggestions. */
+export const CHAT_COMMANDS = [...CHAT_ACTIONS, ...CHAT_AGENCY] as const;
+
 export type ChatInput =
   | { kind: "action"; action: ChatAction; arg?: string }
+  | { kind: "agency"; command: ChatAgency; id?: string }
   | { kind: "talk"; text: string };
 
 /**
  * Decide whether a sent chat line is a command or just something to say. A line
- * that starts with `tama <verb>` (e.g. `tama clean`, `tama feed apple`) runs
- * that action; everything else — including a bare `clean` or a real sentence —
- * stays chat, so normal talk is never hijacked.
+ * that starts with `tama <verb>` runs that command — a care action (`tama
+ * clean`, `tama feed apple`) or owner adjudication (`tama approve p3`). Anything
+ * else, including a bare `clean` or a real sentence, stays chat, so normal talk
+ * is never hijacked.
  */
 export function parseChatInput(msg: string): ChatInput {
   const trimmed = msg.trim();
   const m = /^tama\s+(\S+)\s*([\s\S]*)$/i.exec(trimmed);
   if (m) {
     const verb = m[1]!.toLowerCase();
+    const arg = m[2]!.trim();
     if ((CHAT_ACTIONS as readonly string[]).includes(verb)) {
-      const arg = m[2]!.trim();
       return { kind: "action", action: verb as ChatAction, arg: arg || undefined };
+    }
+    if ((CHAT_AGENCY as readonly string[]).includes(verb)) {
+      // Adjudication targets a single proposal id; ignore anything after it.
+      return { kind: "agency", command: verb as ChatAgency, id: arg.split(/\s+/)[0] || undefined };
     }
   }
   return { kind: "talk", text: trimmed };
@@ -65,27 +79,27 @@ export function parseChatInput(msg: string): ChatInput {
 
 /**
  * Tab-complete the verb right after `tama `. Completes only when exactly one
- * action matches the partial; a bare or ambiguous prefix is left untouched.
+ * command matches the partial; a bare or ambiguous prefix is left untouched.
  */
 export function completeChatInput(input: string): string {
   const m = /^(tama\s+)(\S*)$/i.exec(input);
   if (!m) return input;
   const [, prefix, partial] = m;
-  const matches = CHAT_ACTIONS.filter((c) => c.startsWith(partial!.toLowerCase()));
+  const matches = CHAT_COMMANDS.filter((c) => c.startsWith(partial!.toLowerCase()));
   return matches.length === 1 ? `${prefix}${matches[0]} ` : input;
 }
 
 /**
  * The live suggestion list shown as you type: while you're still on the verb
- * right after `tama `, every action whose name matches the partial. Empty once
+ * right after `tama `, every command whose name matches the partial. Empty once
  * you've moved past the verb or aren't typing a command, so plain chat stays
  * uncluttered.
  */
-export function chatSuggestions(input: string): ChatAction[] {
+export function chatSuggestions(input: string): string[] {
   const m = /^tama\s+(\S*)$/i.exec(input);
   if (!m) return [];
   const partial = m[1]!.toLowerCase();
-  return CHAT_ACTIONS.filter((c) => c.startsWith(partial));
+  return CHAT_COMMANDS.filter((c) => c.startsWith(partial));
 }
 
 /**
@@ -175,13 +189,16 @@ export function watch(ctx: CommandContext, opts: WatchOptions = {}): string {
       if (out.send) {
         try {
           // Stamp with the current time, not the frozen frame time. A `tama <verb>`
-          // line runs that action inline; anything else is queued as chat.
+          // line runs that command inline; anything else is queued as chat.
           const cmd = parseChatInput(out.send);
-          const now = new Date();
-          status =
-            cmd.kind === "action"
-              ? queueAction(cmd.action, cmd.arg, { ...ctx, now })
-              : queueAction("talk", cmd.text, { ...ctx, now });
+          const actx = { ...ctx, now: new Date() };
+          if (cmd.kind === "action") {
+            status = queueAction(cmd.action, cmd.arg, actx);
+          } else if (cmd.kind === "agency") {
+            status = cmd.command === "approve" ? approve(cmd.id, actx) : deny(cmd.id, actx);
+          } else {
+            status = queueAction("talk", cmd.text, actx);
+          }
         } catch (err) {
           status = err instanceof Error ? err.message : String(err);
         }

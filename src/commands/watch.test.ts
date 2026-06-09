@@ -115,6 +115,23 @@ describe("parseChatInput", () => {
     expect(parseChatInput("tama hello there")).toEqual({ kind: "talk", text: "tama hello there" });
   });
 
+  it("routes approve/deny to agency with the proposal id", () => {
+    expect(parseChatInput("tama approve p3")).toEqual({
+      kind: "agency",
+      command: "approve",
+      id: "p3",
+    });
+    expect(parseChatInput("tama deny p7")).toEqual({ kind: "agency", command: "deny", id: "p7" });
+  });
+
+  it("takes only the first token as the proposal id", () => {
+    expect(parseChatInput("tama approve p3 p4")).toEqual({
+      kind: "agency",
+      command: "approve",
+      id: "p3",
+    });
+  });
+
   it("keeps an ordinary message as chat", () => {
     expect(parseChatInput("you're a cool companion")).toEqual({
       kind: "talk",
@@ -127,6 +144,8 @@ describe("completeChatInput", () => {
   it("completes a unique prefix", () => {
     expect(completeChatInput("tama cl")).toBe("tama clean ");
     expect(completeChatInput("tama r")).toBe("tama rest ");
+    expect(completeChatInput("tama a")).toBe("tama approve ");
+    expect(completeChatInput("tama d")).toBe("tama deny ");
   });
 
   it("leaves an ambiguous prefix alone", () => {
@@ -140,13 +159,23 @@ describe("completeChatInput", () => {
 });
 
 describe("chatSuggestions", () => {
-  it("lists every action right after `tama `", () => {
-    expect(chatSuggestions("tama ")).toEqual(["feed", "play", "clean", "rest", "talk"]);
+  it("lists every command right after `tama `", () => {
+    expect(chatSuggestions("tama ")).toEqual([
+      "feed",
+      "play",
+      "clean",
+      "rest",
+      "talk",
+      "approve",
+      "deny",
+    ]);
   });
 
-  it("narrows to actions matching the partial verb", () => {
+  it("narrows to commands matching the partial verb", () => {
     expect(chatSuggestions("tama c")).toEqual(["clean"]);
     expect(chatSuggestions("tama re")).toEqual(["rest"]);
+    expect(chatSuggestions("tama a")).toEqual(["approve"]);
+    expect(chatSuggestions("tama d")).toEqual(["deny"]);
   });
 
   it("is empty once past the verb or when not a command", () => {
