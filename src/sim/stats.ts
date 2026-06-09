@@ -42,6 +42,29 @@ export function applyDelta(needs: Needs, name: NeedName, delta: number): Needs {
   return { ...needs, [name]: clamp(needs[name] + delta) };
 }
 
+/** Energy a left-alone creature drifts back up to on quiet ticks. */
+export const RESTED_BASELINE = 60;
+/** How fast energy recovers, in points per hour, on a tick with no play. */
+export const REST_REGEN_PER_HOUR = 8;
+
+/**
+ * Energy is the one need none of the care actions refill, so without this a
+ * creature would drain forever. On a quiet tick — no play — energy recovers
+ * gently toward a rested baseline: being left in peace is restful. It never
+ * climbs above the baseline on its own (an explicit `rest` is needed for a real
+ * top-up), so passive recovery can't mask neglect by carrying a creature to full
+ * energy while its other needs starve.
+ */
+export function passiveEnergyRegen(
+  needs: Needs,
+  hours: number,
+  hadPlay: boolean,
+): Needs {
+  if (hadPlay || hours <= 0 || needs.energy >= RESTED_BASELINE) return needs;
+  const recovered = Math.min(RESTED_BASELINE, needs.energy + REST_REGEN_PER_HOUR * hours);
+  return { ...needs, energy: recovered };
+}
+
 /** A need is in the danger zone below this. Used by health.ts. */
 export const DANGER_THRESHOLD = 15;
 

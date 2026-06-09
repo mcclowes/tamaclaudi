@@ -148,6 +148,34 @@ describe("advance", () => {
     expect(state.needs.hygiene).toBeGreaterThan(allChild.hygiene);
   });
 
+  it("recovers energy on a quiet tick, but drains it on one spent playing", () => {
+    const stats = babyStats({ needs: { ...startingNeeds(), energy: 30 } });
+    const at = new Date("2026-06-08T03:00:00Z"); // 3h
+    const idle = advance(stats, seed, [], at, DEFAULT_CONFIG);
+    const played = advance(
+      stats,
+      seed,
+      [{ at: "2026-06-08T01:00:00Z", type: "play" }],
+      at,
+      DEFAULT_CONFIG,
+    );
+    expect(idle.state.needs.energy).toBeGreaterThan(played.state.needs.energy);
+    // A quiet tick actually lifts energy rather than only slowing the drain.
+    expect(idle.state.needs.energy).toBeGreaterThan(stats.needs.energy);
+  });
+
+  it("a rest event can carry energy to full, and never past 100", () => {
+    const stats = babyStats({ needs: { ...startingNeeds(), energy: 95 } });
+    const { state } = advance(
+      stats,
+      seed,
+      [{ at: "2026-06-08T01:00:00Z", type: "rest" }],
+      new Date("2026-06-08T02:00:00Z"),
+      DEFAULT_CONFIG,
+    );
+    expect(state.needs.energy).toBe(100);
+  });
+
   it("can kill after long neglect under realStakes", () => {
     const realStakes: Config = { realStakes: true };
     const stats = babyStats({

@@ -7,6 +7,8 @@ import {
   anyInDanger,
   lowestNeed,
   BASE_DECAY_PER_HOUR,
+  passiveEnergyRegen,
+  RESTED_BASELINE,
 } from "./stats.js";
 
 describe("clamp", () => {
@@ -67,5 +69,36 @@ describe("danger helpers", () => {
     const low = lowestNeed({ ...startingNeeds(), joy: 3 });
     expect(low.name).toBe("joy");
     expect(low.value).toBe(3);
+  });
+});
+
+describe("passiveEnergyRegen", () => {
+  it("recovers energy toward the rested baseline when a tick is idle", () => {
+    const tired = { ...startingNeeds(), energy: 20 };
+    const after = passiveEnergyRegen(tired, 2, false);
+    expect(after.energy).toBeGreaterThan(tired.energy);
+    expect(after.energy).toBeLessThanOrEqual(RESTED_BASELINE);
+  });
+
+  it("never lifts energy above the rested baseline on its own", () => {
+    const tired = { ...startingNeeds(), energy: RESTED_BASELINE - 1 };
+    const after = passiveEnergyRegen(tired, 100, false);
+    expect(after.energy).toBe(RESTED_BASELINE);
+  });
+
+  it("leaves energy already above the baseline untouched — that takes an active rest", () => {
+    const lively = { ...startingNeeds(), energy: RESTED_BASELINE + 20 };
+    expect(passiveEnergyRegen(lively, 5, false).energy).toBe(RESTED_BASELINE + 20);
+  });
+
+  it("does not recover on a tick where the creature played — play is tiring", () => {
+    const tired = { ...startingNeeds(), energy: 20 };
+    expect(passiveEnergyRegen(tired, 5, true).energy).toBe(20);
+  });
+
+  it("only touches energy, leaving the other needs alone", () => {
+    const tired = { ...startingNeeds(), energy: 20 };
+    const after = passiveEnergyRegen(tired, 2, false);
+    expect({ ...after, energy: tired.energy }).toEqual(tired);
   });
 });

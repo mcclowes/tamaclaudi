@@ -66,4 +66,19 @@ describe("applyEvent", () => {
     const nearFull = { ...startingNeeds(), fullness: 95 };
     expect(applyEvent(nearFull, ev("feed", "broccoli"), seed).fullness).toBe(100);
   });
+
+  it("resting restores energy", () => {
+    const tired = { ...startingNeeds(), energy: 20 };
+    expect(applyEvent(tired, ev("rest"), seed).energy).toBe(20 + 30);
+  });
+
+  it("resting is a touch dull — it costs a little joy so play stays the joy source", () => {
+    const n = applyEvent(startingNeeds(), ev("rest"), seed);
+    expect(n.joy).toBe(startingNeeds().joy - 2);
+  });
+
+  it("rest clamps energy at 100", () => {
+    const rested = { ...startingNeeds(), energy: 90 };
+    expect(applyEvent(rested, ev("rest"), seed).energy).toBe(100);
+  });
 });

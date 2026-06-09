@@ -7,6 +7,7 @@ const CONFIRM: Record<EventType, (arg?: string) => string> = {
   play: (arg) => `🎲 queued: play${arg ? ` (${arg})` : ""}. Get ready to have fun.`,
   clean: () => `🛁 queued: clean. A scrub is on the way.`,
   talk: (arg) => `💬 queued: you said "${arg}". It'll reply on the next tick.`,
+  rest: () => `😴 queued: rest. It'll settle down and recover energy on the next tick.`,
 };
 
 /**

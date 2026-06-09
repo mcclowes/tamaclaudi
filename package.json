@@ -10,15 +10,17 @@
     "build": "tsc -p tsconfig.json",
     "tama": "tsx src/cli.ts",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "live": "claude \"/loop 3m /live\""
+    "live": "claude \"/loop 7m /live\""
   },
   "engines": {
     "node": ">=20"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "@vitest/coverage-v8": "^4.1.8",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
     "vitest": "^4.1.8"

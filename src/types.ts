@@ -54,7 +54,7 @@ export interface Seed {
   rngSeed: number;
 }
 
-export type EventType = "feed" | "play" | "clean" | "talk";
+export type EventType = "feed" | "play" | "clean" | "talk" | "rest";
 
 /** One user action, appended to events.jsonl, drained on the next tick. */
 export interface CreatureEvent {

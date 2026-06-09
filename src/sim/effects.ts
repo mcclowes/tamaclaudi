@@ -7,6 +7,9 @@ const BASE_EFFECTS: Record<EventType, Partial<Needs>> = {
   play: { joy: 12, energy: -15, bond: 5 },
   clean: { hygiene: 40 },
   talk: { bond: 18, joy: 6 },
+  // Resting is the one active way to refill energy. It's restorative but a touch
+  // dull, so it costs a little joy — that keeps play the source of real fun.
+  rest: { energy: 30, joy: -2 },
 };
 
 /**
@@ -86,5 +89,7 @@ function primaryNeed(type: EventType): keyof Needs {
       return "hygiene";
     case "talk":
       return "bond";
+    case "rest":
+      return "energy";
   }
 }

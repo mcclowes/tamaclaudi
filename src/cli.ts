@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { defaultContext } from "./commands/context.js";
+import { fileURLToPath } from "node:url";
+import { defaultContext, type CommandContext } from "./commands/context.js";
 import { init } from "./commands/init.js";
 import { tick } from "./commands/tick.js";
 import { queueAction } from "./commands/actions.js";
@@ -36,6 +37,7 @@ Usage: tama <command> [args]
   feed [food]      raise fullness; a favourite food raises more
   play [game]      raise joy, costs energy
   clean            raise hygiene
+  rest             settle down to recover energy (quiet ticks also recover it)
   talk "..."       say something; the next tick replies in feed.md
   tick             advance the body (the soul loop calls this; you can too)
   listen           print what it's saying to you (feed.md)
@@ -72,7 +74,7 @@ Usage: tama <command> [args]
 const VALUE_FLAGS = new Set(["seed", "why", "cmd", "origin", "spark"]);
 
 /** Pull `--flag` and `--flag value` out of args, returning the rest. */
-function parseFlags(args: string[]): { positional: string[]; flags: Map<string, string | true> } {
+export function parseFlags(args: string[]): { positional: string[]; flags: Map<string, string | true> } {
   const positional: string[] = [];
   const flags = new Map<string, string | true>();
   for (let i = 0; i < args.length; i++) {
@@ -98,10 +100,9 @@ function strFlag(flags: Map<string, string | true>, key: string): string | undef
   return typeof v === "string" ? v : undefined;
 }
 
-function run(argv: string[]): string {
+export function run(argv: string[], ctx: CommandContext = defaultContext()): string {
   const [command, ...rest] = argv;
   const { positional, flags } = parseFlags(rest);
-  const ctx = defaultContext();
 
   switch (command) {
     case undefined:
@@ -131,6 +132,8 @@ function run(argv: string[]): string {
       return queueAction("play", positional[0], ctx);
     case "clean":
       return queueAction("clean", undefined, ctx);
+    case "rest":
+      return queueAction("rest", undefined, ctx);
     case "talk":
       return queueAction("talk", positional.join(" ") || undefined, ctx);
     case "tick":
@@ -186,10 +189,15 @@ function run(argv: string[]): string {
   }
 }
 
-try {
-  const output = run(process.argv.slice(2));
-  if (output) console.log(output);
-} catch (err) {
-  console.error(err instanceof Error ? err.message : String(err));
-  process.exit(1);
+/** Only drive the CLI when invoked directly, so the module is safe to import in tests. */
+function main(): void {
+  try {
+    const output = run(process.argv.slice(2));
+    if (output) console.log(output);
+  } catch (err) {
+    console.error(err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  }
 }
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main();

@@ -8,7 +8,7 @@ import {
   type Stage,
   type Stats,
 } from "../types.js";
-import { decayNeeds } from "./stats.js";
+import { decayNeeds, passiveEnergyRegen } from "./stats.js";
 import {
   MS_PER_DAY,
   STAGE_ONSET_DAYS,
@@ -121,6 +121,13 @@ export function advance(
     needs = applyEvent(needs, event, seed);
     eventsApplied.push({ type: event.type, arg: event.arg });
   }
+
+  // Energy is the one need the care actions can't refill, so a quiet tick — one
+  // with no play — lets it drift back up toward a rested baseline. Measured over
+  // the same post-hatch window as decay so an egg never "rests".
+  const hadPlay = events.some((e) => e.type === "play");
+  const restHours = Math.max(0, (nowMs - decayFromMs) / MS_PER_HOUR);
+  needs = passiveEnergyRegen(needs, restHours, hadPlay);
 
   const health = computeHealth(
     { health: stats.health, ailingSince: stats.ailingSince },
