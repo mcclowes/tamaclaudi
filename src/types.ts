@@ -140,6 +140,52 @@ export interface Question {
   answeredAt?: string; // ISO
 }
 
+export type DeliverableStatus = "ready" | "accepted" | "shelved";
+
+/**
+ * A finished piece of work the creature hands back for @mcclowes to actually
+ * use. Distinct from a `Proposal` (which asks permission to *act* outside the
+ * pen): a deliverable is real output built inside the pen — a playbook, a patch,
+ * a press kit — offered as something you can pick up. The soul files it ready;
+ * @mcclowes accepts it (`tama take`) or shelves it (`tama shelve`).
+ */
+export interface Deliverable {
+  id: string;
+  at: string; // ISO
+  title: string;
+  summary?: string;
+  /** Pointer to the artifact in the pen, e.g. workshop/launch-kit.md. */
+  path?: string;
+  status: DeliverableStatus;
+  /** How @mcclowes resolved it, set on take/shelve. */
+  outcome?: string;
+}
+
+/** One durable thing the creature chooses to carry forward across ticks. */
+export interface MemoryBeat {
+  at: string; // ISO
+  text: string;
+}
+
+/**
+ * The creature's working memory: a standing mood plus a bounded list of beats
+ * it deliberately remembers. The body owns the store (every write goes through
+ * a `tama` command), but the soul chooses what is worth remembering — the mood
+ * is psyche, the beats are the creature's own picks. Surfaced in every tick diff
+ * so the loop carries its past without re-reading flat files each time.
+ */
+export interface Memory {
+  /** A short standing feeling the soul maintains, e.g. "quietly proud, a bit tired". */
+  mood: string;
+  moodSetAt: string | null; // ISO
+  beats: MemoryBeat[];
+}
+
+/** How many beats we keep — old ones fall off so memory (and tokens) stay bounded. */
+export const MEMORY_BEATS_KEPT = 12;
+
+export const DEFAULT_MEMORY: Memory = { mood: "", moodSetAt: null, beats: [] };
+
 export interface Config {
   /** When true, sustained neglect can actually kill. Default false (forgiving). */
   realStakes: boolean;

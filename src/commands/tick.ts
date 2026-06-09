@@ -7,6 +7,7 @@ import {
   readStats,
   writeStats,
 } from "../store/io.js";
+import { readMemory } from "../store/memory.js";
 import { renderTick } from "../cli/render.js";
 import type { CommandContext } from "./context.js";
 
@@ -32,5 +33,7 @@ export function tick(ctx: CommandContext): string {
   const { state, changes } = advance(stats, seed, events, ctx.now, config);
   writeStats(state, ctx.p);
 
-  return renderTick(changes, state);
+  // Surface what the creature is carrying, so the loop reads its own memory in
+  // the same diff it reads its body — no extra file read each tick.
+  return renderTick(changes, state, readMemory(ctx.p));
 }

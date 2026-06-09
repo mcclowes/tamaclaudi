@@ -45,6 +45,9 @@ tama talk "..."       say something; the next tick replies in feed.md
 tama tick             advance the body
 tama listen           print what it's saying to you (feed.md)
 tama diary [date]     print a history page (default: today)
+tama capabilities     the menu of what it has learned to do for you
+tama deliverables     finished work it's handed back; tama take / tama shelve one
+tama memory           the mood and beats it's carrying across ticks
 ```
 
 Commands other than `tick` and `status` just append an event to the inbox and confirm.
@@ -95,6 +98,24 @@ inside its own pen:
 - `creature/knowledge/` — notes it researches and remembers.
 - `creature/skills/` — reusable playbooks it writes for helping you.
 - `creature/workshop/` — working tools and scripts it builds and tests.
+
+Three things turn that private growth into something you actually use:
+
+- **It surfaces what it can do.** Each `skills/` playbook is a capability, and
+  `tama capabilities` reads them into a menu — the title and "when to use" line of
+  every skill it's banked. Its competence stops being buried markdown.
+- **It hands back finished work.** When a piece is done and usable, the creature
+  files it with `tama deliver`; it shows up in `tama deliverables` as something
+  ready, and you `tama take` it (into your hands) or `tama shelve` it. Work
+  *lands* instead of just existing.
+- **It can improve its own body.** `src/` is inside its pen, so a capable creature
+  may make the `tama` program itself better — fixing a clumsy command or adding an
+  affordance — under one rule: the change ships with a test, and `npm test` and
+  `npm run typecheck` must stay green. It never pushes; that's still a proposal.
+
+It also keeps a small **memory** across ticks — a standing mood and a few beats it
+chooses to carry (`tama remember`, `tama mood`) — surfaced in every tick diff so it
+compounds context instead of waking up blank. `tama memory` shows what it's holding.
 
 ### Hand it a problem
 

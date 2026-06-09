@@ -26,6 +26,16 @@ import {
   goalDone,
   goalDrop,
 } from "./commands/agency.js";
+import {
+  capabilities,
+  deliver,
+  deliverables,
+  take,
+  shelve,
+  remember,
+  mood,
+  memory,
+} from "./commands/growth.js";
 
 const HELP = `tamaclaudie — raise a creature in your terminal
 
@@ -45,6 +55,7 @@ Usage: tama <command> [args]
   tick             advance the body (the soul loop calls this; you can too)
   listen           print what it's saying to you (feed.md)
   diary [date]     print a history page (default: today, YYYY-MM-DD)
+  capabilities     what your creature has learned to do for you (its skills)
 
  hand it a problem to work on:
   task "..."             give the creature a problem to pursue across ticks
@@ -60,6 +71,17 @@ Usage: tama <command> [args]
   goal-done <id> "..."   (soul) fulfil a goal it reached
   goal-drop <id> "..."   (soul) let go of a goal that no longer fits
 
+ finished work it hands back (the soul files these; you pick them up):
+  deliverables [--all]   work it's finished and offered you (default: ready ones)
+  take <id> ["note"]     accept a deliverable into your hands
+  shelve <id> ["note"]   set one aside for now
+  deliver "..." [--summary .. --path ..]   (soul) hand back a finished piece of work
+
+ what it carries across ticks (the soul tends these; you watch):
+  memory                 the mood and beats it's carrying right now
+  remember "..."         (soul) keep a durable beat across ticks
+  mood "..."             (soul) set its standing mood
+
  the creature's agency (the soul files these; you adjudicate):
   proposals [--all]      external actions it wants to take (default: open ones)
   approve <id>           approve a proposal; the loop may then run it
@@ -74,7 +96,7 @@ Usage: tama <command> [args]
 `;
 
 /** Flags that consume the following argument as their value. */
-const VALUE_FLAGS = new Set(["seed", "why", "cmd", "origin", "spark"]);
+const VALUE_FLAGS = new Set(["seed", "why", "cmd", "origin", "spark", "summary", "path"]);
 
 /** Pull `--flag` and `--flag value` out of args, returning the rest. */
 export function parseFlags(args: string[]): { positional: string[]; flags: Map<string, string | true> } {
@@ -147,6 +169,28 @@ export function run(argv: string[], ctx: CommandContext = defaultContext()): str
       return listen(ctx);
     case "diary":
       return diary(positional[0], ctx);
+    case "capabilities":
+    case "skills":
+      return capabilities(ctx);
+
+    case "deliver":
+      return deliver(
+        { title: positional.join(" "), summary: strFlag(flags, "summary"), path: strFlag(flags, "path") },
+        ctx,
+      );
+    case "deliverables":
+      return deliverables(ctx, flags.has("all"));
+    case "take":
+      return take(positional[0], positional.slice(1).join(" ") || undefined, ctx);
+    case "shelve":
+      return shelve(positional[0], positional.slice(1).join(" ") || undefined, ctx);
+
+    case "memory":
+      return memory(ctx);
+    case "remember":
+      return remember(positional.join(" ") || undefined, ctx);
+    case "mood":
+      return mood(positional.join(" ") || undefined, ctx);
 
     case "proposals":
       return proposals(ctx, flags.has("all"));

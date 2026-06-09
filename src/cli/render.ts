@@ -1,4 +1,4 @@
-import { NEEDS, type Needs, type Stats } from "../types.js";
+import { NEEDS, type Memory, type Needs, type Stats } from "../types.js";
 import { ageDays } from "../sim/stages.js";
 import { creatureArt } from "./art.js";
 import type { TickChanges } from "../sim/tick.js";
@@ -33,8 +33,28 @@ function signed(n: number): string {
   return r > 0 ? `+${r}` : `${r}`;
 }
 
+/** How many recent beats to surface in a tick recap — enough to carry, few enough to stay cheap. */
+const RECAP_BEATS = 3;
+
+/**
+ * The compact memory recap. Shown in every tick so the loop carries its mood and
+ * a few recent beats without re-reading flat files. Empty string when there's
+ * nothing yet, so callers can skip it cleanly.
+ */
+export function renderMemory(memory: Memory, beats = RECAP_BEATS): string {
+  const lines: string[] = [];
+  if (memory.mood.trim()) lines.push(`🧠 mood: ${memory.mood.trim()}`);
+  const recent = memory.beats.slice(0, beats);
+  if (recent.length) {
+    if (!lines.length) lines.push("🧠 carrying:");
+    else lines.push("   carrying:");
+    for (const b of recent) lines.push(`   · ${b.text}`);
+  }
+  return lines.join("\n");
+}
+
 /** The diff `tama tick` prints — what the soul loop reads to interpret. */
-export function renderTick(changes: TickChanges, stats: Stats): string {
+export function renderTick(changes: TickChanges, stats: Stats, memory?: Memory): string {
   const lines: string[] = [];
   lines.push(creatureArt(stats), "");
   lines.push(`tick: ${changes.hoursElapsed.toFixed(2)}h elapsed`);
@@ -64,6 +84,11 @@ export function renderTick(changes: TickChanges, stats: Stats): string {
 
   if (changes.warning) lines.push(`⚠ ${changes.warning}`);
   if (changes.died) lines.push("† the creature has died.");
+
+  if (memory) {
+    const recap = renderMemory(memory);
+    if (recap) lines.push("", recap);
+  }
 
   return lines.join("\n");
 }

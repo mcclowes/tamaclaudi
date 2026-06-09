@@ -24,6 +24,10 @@ export interface CreaturePaths {
   questions: string;
   tasks: string;
   goals: string;
+  /** Finished work the creature hands back for @mcclowes to use. */
+  deliverables: string;
+  /** What the creature deliberately carries forward across ticks. */
+  memory: string;
   /** Where the soul builds its mind — real artifacts it owns. */
   knowledgeDir: string;
   skillsDir: string;
@@ -45,6 +49,8 @@ export function paths(dir = creatureDir()): CreaturePaths {
     questions: join(dir, "questions.json"),
     tasks: join(dir, "tasks.json"),
     goals: join(dir, "goals.json"),
+    deliverables: join(dir, "deliverables.json"),
+    memory: join(dir, "memory.json"),
     knowledgeDir: join(dir, "knowledge"),
     skillsDir: join(dir, "skills"),
     workshopDir: join(dir, "workshop"),
