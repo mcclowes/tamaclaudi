@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { paths, type CreaturePaths } from "../store/paths.js";
 import { writeStats, writeSeed, writeFeed, ensureDirs } from "../store/io.js";
 import { addProposal, addQuestion, addGoal, answerQuestion } from "../store/agency.js";
+import { addDeliverable } from "../store/deliverables.js";
 import type { CommandContext } from "../commands/context.js";
 import type { Seed, Stats } from "../types.js";
 import { renderDashboard } from "./dashboard.js";
@@ -78,6 +79,22 @@ describe("renderDashboard", () => {
     const out = renderDashboard(ctxAt("2026-06-08T00:00:00Z"));
     expect(out).not.toContain("answered already?");
     expect(out).toMatch(/caught up/);
+  });
+
+  it("lists ready deliverables awaiting a take/shelve decision", () => {
+    addDeliverable({ title: "clipped press kit", at: "2026-06-08T00:00:00Z" }, p);
+    const out = renderDashboard(ctxAt("2026-06-08T00:00:00Z"));
+    expect(out).toContain("[d1] clipped press kit");
+    expect(out).toMatch(/tama take d1/);
+    expect(out).not.toMatch(/caught up/);
+  });
+
+  it("clips an over-long deliverable title so it can't wreck the panel", () => {
+    addDeliverable({ title: "x".repeat(200), at: "2026-06-08T00:00:00Z" }, p);
+    const out = renderDashboard(ctxAt("2026-06-08T00:00:00Z"));
+    const line = out.split("\n").find((l) => l.includes("[d1]"))!;
+    expect(line).toContain("…");
+    expect(line.length).toBeLessThan(80);
   });
 
   it("shows active goals only", () => {

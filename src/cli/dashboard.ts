@@ -2,6 +2,7 @@ import { NEEDS, type Needs } from "../types.js";
 import { ageDays } from "../sim/stages.js";
 import { exists, readStats, readFeed } from "../store/io.js";
 import { readProposals, readQuestions, readGoals } from "../store/agency.js";
+import { readDeliverables } from "../store/deliverables.js";
 import { creatureArt } from "./art.js";
 import { bar } from "./render.js";
 import type { CommandContext } from "../commands/context.js";
@@ -32,6 +33,11 @@ function needRows(needs: Needs): string[] {
   return NEEDS.map((n) => `${n.padEnd(8)} ${bar(needs[n], 10)} ${String(Math.round(needs[n])).padStart(3)}`);
 }
 
+/** Trim a string to a max width, marking the cut with an ellipsis. */
+function clip(s: string, width: number): string {
+  return s.length > width ? s.slice(0, width - 1) + "…" : s;
+}
+
 /** First few non-empty lines of the feed, each clipped to keep the panel tidy. */
 function feedSnippet(feed: string, lines = 3, width = 56): string[] {
   const picked = feed
@@ -40,7 +46,7 @@ function feedSnippet(feed: string, lines = 3, width = 56): string[] {
     .filter((l) => l.length > 0)
     .slice(0, lines);
   if (!picked.length) return ["(quiet — run the soul loop to give it a voice)"];
-  return picked.map((l) => (l.length > width ? l.slice(0, width - 1) + "…" : l));
+  return picked.map((l) => clip(l, width));
 }
 
 /**
@@ -66,15 +72,18 @@ export function renderDashboard(ctx: CommandContext): string {
 
   const pending = readProposals(ctx.p).filter((p) => p.status === "pending");
   const unanswered = readQuestions(ctx.p).filter((q) => !q.answer);
+  const ready = readDeliverables(ctx.p).filter((d) => d.status === "ready");
   out.push(rule("needs you"));
-  if (!pending.length && !unanswered.length) {
+  if (!pending.length && !unanswered.length && !ready.length) {
     out.push("  nothing waiting — you're all caught up ✓");
   } else {
     for (const p of pending) out.push(`  ⚠ [${p.id}] ${p.action}`);
     for (const q of unanswered) out.push(`  ? [${q.id}] ${q.text}`);
+    for (const d of ready) out.push(`  📦 [${d.id}] ${clip(d.title, 56)}`);
     const acts: string[] = [];
     if (pending.length) acts.push(`tama approve ${pending[0]!.id}`);
     if (unanswered.length) acts.push(`tama answer ${unanswered[0]!.id} "..."`);
+    if (ready.length) acts.push(`tama take ${ready[0]!.id}`);
     out.push(`  └ act in another pane: ${acts.join(" · ")}`);
   }
   out.push("");
