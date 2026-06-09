@@ -8,7 +8,8 @@ import {
   writeStats,
 } from "../store/io.js";
 import { readMemory } from "../store/memory.js";
-import { renderTick } from "../cli/render.js";
+import { readQuestions } from "../store/agency.js";
+import { renderAttention, renderTick } from "../cli/render.js";
 import type { CommandContext } from "./context.js";
 
 /**
@@ -25,6 +26,10 @@ export function tick(ctx: CommandContext): string {
     return "tick: the creature has died. The body no longer moves.";
   }
 
+  // Captured before advance overwrites lastTick: the window for "what changed
+  // since the soul last looked", used to surface @mcclowes's between-tick replies.
+  const lastLooked = new Date(stats.lastTick);
+
   // An egg has no needs yet, so anything queued before it hatches would be
   // spent for nothing. Leave the inbox untouched while still an egg; the events
   // wait and are drained on the first tick after hatching.
@@ -33,7 +38,9 @@ export function tick(ctx: CommandContext): string {
   const { state, changes } = advance(stats, seed, events, ctx.now, config);
   writeStats(state, ctx.p);
 
-  // Surface what the creature is carrying, so the loop reads its own memory in
-  // the same diff it reads its body — no extra file read each tick.
-  return renderTick(changes, state, readMemory(ctx.p));
+  // Surface what the creature is carrying (mood + recent beats) and any reply
+  // @mcclowes left since the last tick, so the loop reads its memory and its
+  // news in the same diff it reads its body — no extra file read each tick.
+  const attention = renderAttention(readQuestions(ctx.p), lastLooked, ctx.now);
+  return renderTick(changes, state, readMemory(ctx.p), attention);
 }

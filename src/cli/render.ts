@@ -1,4 +1,4 @@
-import { NEEDS, type Memory, type Needs, type Stats } from "../types.js";
+import { NEEDS, type Memory, type Needs, type Question, type Stats } from "../types.js";
 import { ageDays } from "../sim/stages.js";
 import { creatureArt } from "./art.js";
 import type { TickChanges } from "../sim/tick.js";
@@ -53,8 +53,32 @@ export function renderMemory(memory: Memory, beats = RECAP_BEATS): string {
   return lines.join("\n");
 }
 
+/**
+ * News from @mcclowes that the body-event diff would otherwise hide: questions
+ * answered since the soul last looked. Windowed by (since, now] so each answer
+ * surfaces exactly once — by the next tick, `since` has moved past it. Without
+ * this the loop would have to re-read questions.json to notice a reply.
+ */
+export function renderAttention(questions: Question[], since: Date, now: Date): string {
+  const sinceMs = since.getTime();
+  const nowMs = now.getTime();
+  return questions
+    .filter((q) => {
+      if (!q.answer || !q.answeredAt) return false;
+      const t = Date.parse(q.answeredAt);
+      return t > sinceMs && t <= nowMs;
+    })
+    .map((q) => `💬 @mcclowes answered ${q.id}: ${q.answer}`)
+    .join("\n");
+}
+
 /** The diff `tama tick` prints — what the soul loop reads to interpret. */
-export function renderTick(changes: TickChanges, stats: Stats, memory?: Memory): string {
+export function renderTick(
+  changes: TickChanges,
+  stats: Stats,
+  memory?: Memory,
+  attention?: string,
+): string {
   const lines: string[] = [];
   lines.push(creatureArt(stats), "");
   lines.push(`tick: ${changes.hoursElapsed.toFixed(2)}h elapsed`);
@@ -84,6 +108,8 @@ export function renderTick(changes: TickChanges, stats: Stats, memory?: Memory):
 
   if (changes.warning) lines.push(`⚠ ${changes.warning}`);
   if (changes.died) lines.push("† the creature has died.");
+
+  if (attention && attention.trim()) lines.push("", attention);
 
   if (memory) {
     const recap = renderMemory(memory);

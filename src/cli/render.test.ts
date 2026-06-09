@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { renderStatus, renderTick } from "./render.js";
-import type { Needs, Stats } from "../types.js";
+import { renderAttention, renderStatus, renderTick } from "./render.js";
+import type { Needs, Question, Stats } from "../types.js";
 import type { TickChanges } from "../sim/tick.js";
 
 const needs: Needs = { fullness: 100, energy: 50, hygiene: 80, joy: 65, bond: 30 };
@@ -87,5 +87,43 @@ describe("renderTick", () => {
     expect(out).toMatch(/fullness\s+70 \(\+10\)/);
     // energy moved by 0.2 — below the threshold, so no annotation.
     expect(out).toMatch(/energy\s+50(?!\s*\()/);
+  });
+
+  it("surfaces an attention block when one is passed", () => {
+    const out = renderTick(baseChanges(), stats, undefined, "💬 @mcclowes answered q2: look here");
+    expect(out).toContain("💬 @mcclowes answered q2: look here");
+  });
+});
+
+describe("renderAttention", () => {
+  const q = (over: Partial<Question>): Question => ({
+    id: "q1",
+    at: "2026-06-08T00:00:00.000Z",
+    text: "what next?",
+    ...over,
+  });
+  const since = new Date("2026-06-08T12:00:00.000Z");
+  const now = new Date("2026-06-08T13:00:00.000Z");
+
+  it("surfaces a question answered within (since, now]", () => {
+    const out = renderAttention(
+      [q({ id: "q2", answer: "look in ../foo", answeredAt: "2026-06-08T12:30:00.000Z" })],
+      since,
+      now,
+    );
+    expect(out).toContain("💬 @mcclowes answered q2: look in ../foo");
+  });
+
+  it("ignores answers from before the window — each surfaces only once", () => {
+    const out = renderAttention(
+      [q({ id: "q2", answer: "old news", answeredAt: "2026-06-08T09:00:00.000Z" })],
+      since,
+      now,
+    );
+    expect(out).toBe("");
+  });
+
+  it("ignores questions that have no answer yet", () => {
+    expect(renderAttention([q({ id: "q3" })], since, now)).toBe("");
   });
 });
