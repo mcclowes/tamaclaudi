@@ -42,8 +42,14 @@ export function applyDelta(needs: Needs, name: NeedName, delta: number): Needs {
   return { ...needs, [name]: clamp(needs[name] + delta) };
 }
 
-/** Energy a left-alone creature drifts back up to on quiet ticks. */
-export const RESTED_BASELINE = 60;
+/**
+ * Energy a left-alone creature drifts back up to on quiet ticks. Set to the
+ * starting "rested" energy (70) rather than lower, so the baseline sits inside
+ * the band an active creature actually lives in. Too low and passive rest only
+ * ever shows up once a creature is already run-down, which makes "I rested, why
+ * am I still tired?" a fair complaint.
+ */
+export const RESTED_BASELINE = 70;
 /** How fast energy recovers, in points per hour, on a tick with no play. */
 export const REST_REGEN_PER_HOUR = 8;
 

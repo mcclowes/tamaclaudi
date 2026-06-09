@@ -91,6 +91,13 @@ describe("passiveEnergyRegen", () => {
     expect(passiveEnergyRegen(lively, 5, false).energy).toBe(RESTED_BASELINE + 20);
   });
 
+  it("the rested baseline sits inside an active life, so a busy creature in the 60s still recovers on a quiet tick", () => {
+    // Regression guard for the baseline being too low to matter: an active
+    // creature spends most of its life above 60, and rest must be felt there.
+    const busy = { ...startingNeeds(), energy: 65 };
+    expect(passiveEnergyRegen(busy, 2, false).energy).toBeGreaterThan(65);
+  });
+
   it("does not recover on a tick where the creature played — play is tiring", () => {
     const tired = { ...startingNeeds(), energy: 20 };
     expect(passiveEnergyRegen(tired, 5, true).energy).toBe(20);
