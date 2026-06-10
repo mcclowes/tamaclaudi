@@ -1,6 +1,7 @@
 import { NEEDS, type Memory, type Needs, type Question, type Stats } from "../types.js";
 import { ageDays } from "../sim/stages.js";
 import { wellbeing } from "../sim/valence.js";
+import type { Achievement } from "../achievements/defs.js";
 import { creatureArt } from "./art.js";
 import type { TickChanges } from "../sim/tick.js";
 
@@ -95,6 +96,7 @@ export function renderTick(
   stats: Stats,
   memory?: Memory,
   attention?: string,
+  unlocked?: Achievement[],
 ): string {
   const lines: string[] = [];
   lines.push(creatureArt(stats), "");
@@ -124,6 +126,10 @@ export function renderTick(
   }
 
   lines.push(moodLine(changes));
+
+  if (unlocked?.length) {
+    for (const a of unlocked) lines.push(`🏆 unlocked: ${a.title} — ${a.description}`);
+  }
 
   if (changes.warning) lines.push(`⚠ ${changes.warning}`);
   if (changes.died) lines.push("† the creature has died.");
