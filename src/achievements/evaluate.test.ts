@@ -129,4 +129,12 @@ describe("newlyUnlocked", () => {
     expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({ stage: "adult", valence: 40 })))).not.toContain("grown-and-glad");
     expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({ stage: "child", valence: 90 })))).not.toContain("grown-and-glad");
   });
+
+  it("unlocks the streak tiers off the best care streak", () => {
+    const got = (best: number) => ids(newlyUnlocked(ALL_ACHIEVEMENTS, { ...ctx(), counters: { ...emptyCounters(), bestCareStreak: best } }));
+    expect(got(10)).toContain("steady-hand");
+    expect(got(10)).not.toContain("devoted-care");
+    expect(got(50)).toEqual(expect.arrayContaining(["steady-hand", "devoted-care"]));
+    expect(got(200)).toEqual(expect.arrayContaining(["steady-hand", "devoted-care", "unbroken"]));
+  });
 });

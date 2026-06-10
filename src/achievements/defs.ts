@@ -85,6 +85,9 @@ export const COUNT_ACHIEVEMENTS: Achievement[] = [
   { id: "groomed", title: "Well-Groomed", description: "Cleaned 50 times.", check: (c) => countersOf(c).clean >= 50 },
   { id: "rested-soul", title: "Rested Soul", description: "Rested 50 times.", check: (c) => countersOf(c).rest >= 50 },
   { id: "devoted", title: "Devoted", description: "Fed 500 times.", check: (c) => countersOf(c).feed >= 500 },
+  { id: "steady-hand", title: "Steady Hand", description: "Kept every need comfortable for 10 ticks straight.", check: (c) => countersOf(c).bestCareStreak >= 10 },
+  { id: "devoted-care", title: "Devoted Care", description: "A 50-tick streak with no need neglected.", check: (c) => countersOf(c).bestCareStreak >= 50 },
+  { id: "unbroken", title: "Unbroken", description: "A 200-tick streak of unbroken comfort.", check: (c) => countersOf(c).bestCareStreak >= 200 },
 ];
 
 /** The whole catalogue — what the tick evaluates and the view lists. */
