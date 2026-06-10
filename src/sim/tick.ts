@@ -9,6 +9,7 @@ import {
   type Stats,
 } from "../types.js";
 import { decayNeeds, passiveEnergyRegen } from "./stats.js";
+import { smoothValence, wellbeing } from "./valence.js";
 import {
   MS_PER_DAY,
   STAGE_ONSET_DAYS,
@@ -59,6 +60,8 @@ export interface TickChanges {
   hatched: boolean;
   died: boolean;
   warning: string | null;
+  valenceBefore: number;
+  valenceAfter: number;
 }
 
 export interface TickResult {
@@ -77,6 +80,8 @@ function emptyChanges(stats: Stats): TickChanges {
     hatched: false,
     died: false,
     warning: null,
+    valenceBefore: stats.valence ?? wellbeing(stats.needs),
+    valenceAfter: stats.valence ?? wellbeing(stats.needs),
   };
 }
 
@@ -137,13 +142,23 @@ export function advance(
     config,
   );
 
+  // Mood lags the body: valence chases the mean of the post-tick needs slowly,
+  // so a good meal still warms the feeling several ticks later. Computed over
+  // the elapsed window; a fresh creature with no prior valence starts at its
+  // current wellbeing (no lag to inherit yet).
+  const valence = smoothValence(stats.valence, wellbeing(needs), hoursElapsed);
+
+  // Spread the prior stats first so any field the sim doesn't model — cosmetic
+  // accessories, and anything added later — survives the tick instead of being
+  // silently dropped. The computed fields below then override what did change.
   const nextState: Stats = {
-    bornAt: stats.bornAt,
+    ...stats,
     lastTick: now.toISOString(),
     stage: stageAfter,
     health: health.health,
     needs,
     ailingSince: health.ailingSince,
+    valence,
   };
 
   const changes: TickChanges = {
@@ -159,6 +174,8 @@ export function advance(
     hatched: stageBefore === "egg" && stageAfter !== "egg",
     died: health.health === "dead",
     warning: health.warning,
+    valenceBefore: stats.valence ?? wellbeing(stats.needs),
+    valenceAfter: valence,
   };
 
   return { state: nextState, changes };

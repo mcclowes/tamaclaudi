@@ -16,6 +16,10 @@ export const HEALTHS = ["well", "sick", "dead"] as const;
 export type Health = (typeof HEALTHS)[number];
 
 /** The full mechanical state. Persisted as stats.json. */
+/** Cosmetic items the creature can be given to wear. Purely for show. */
+export type Accessory = "hat";
+export const ACCESSORIES: Accessory[] = ["hat"];
+
 export interface Stats {
   bornAt: string; // ISO
   lastTick: string; // ISO
@@ -27,6 +31,16 @@ export interface Stats {
    * when the creature is comfortable. Drives the slow slide into sickness.
    */
   ailingSince: string | null;
+  /** A cosmetic accessory the creature is wearing, if any. Absent = bare. */
+  accessory?: Accessory;
+  /**
+   * A smoothed wellbeing scalar (0–100) that lags the needs, giving mood
+   * inertia: it chases the mean of the needs slowly, so feelings carry across
+   * ticks instead of snapping to the current numbers. The soul still names the
+   * feeling — this just gives it momentum. Absent on creatures born before it
+   * existed; the next tick fills it in.
+   */
+  valence?: number;
 }
 
 export const TEMPERAMENT_AXES = [

@@ -80,4 +80,22 @@ describe("creatureArt", () => {
       expect(creatureArt(stats({ stage })).split("\n").length).toBeGreaterThan(1);
     }
   });
+
+  it("wears a hat above the head when one is on, and is bare otherwise", () => {
+    const hatBrim = "__|   |__";
+    for (const stage of ["baby", "child", "teen", "adult"] as const) {
+      expect(creatureArt(stats({ stage }))).not.toContain(hatBrim);
+      const hatted = creatureArt(stats({ stage, accessory: "hat" }));
+      expect(hatted).toContain(hatBrim);
+      // the hat sits above the domed head, never below the face
+      expect(hatted.indexOf(hatBrim)).toBeLessThan(hatted.indexOf(".---------."));
+    }
+  });
+
+  it("never puts a hat on an unhatched or dead egg", () => {
+    expect(creatureArt(stats({ stage: "egg", accessory: "hat" }))).not.toContain("__|   |__");
+    expect(creatureArt(stats({ stage: "egg", health: "dead", accessory: "hat" }))).not.toContain(
+      "__|   |__",
+    );
+  });
 });

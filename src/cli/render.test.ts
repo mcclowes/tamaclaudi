@@ -24,6 +24,8 @@ const baseChanges = (over: Partial<TickChanges> = {}): TickChanges => ({
   hatched: false,
   died: false,
   warning: null,
+  valenceBefore: 60,
+  valenceAfter: 60,
   ...over,
 });
 
@@ -42,6 +44,23 @@ describe("renderStatus", () => {
 describe("renderTick", () => {
   it("reports elapsed hours", () => {
     expect(renderTick(baseChanges({ hoursElapsed: 5 }), stats)).toMatch(/tick: 5\.00h elapsed/);
+  });
+
+  it("shows a mood line with valence, its change, and a lag direction", () => {
+    // needs here average to wellbeing 65; valence sits below it and rose, so the
+    // mood is still lifting toward the better state.
+    const out = renderTick(baseChanges({ valenceBefore: 50, valenceAfter: 62 }), stats);
+    expect(out).toMatch(/mood:\s+62 \(\+12\)\s+↑ lifting/);
+  });
+
+  it("calls the mood steady when valence already matches wellbeing", () => {
+    const out = renderTick(baseChanges({ valenceBefore: 65, valenceAfter: 65 }), stats);
+    expect(out).toMatch(/mood:\s+65\s+· steady/);
+  });
+
+  it("calls the mood settling when valence is coasting above current wellbeing", () => {
+    const out = renderTick(baseChanges({ valenceBefore: 92, valenceAfter: 90 }), stats);
+    expect(out).toMatch(/mood:\s+90 \(-2\)\s+↓ settling/);
   });
 
   it("announces hatching, and suppresses the generic grew-line when hatched", () => {
