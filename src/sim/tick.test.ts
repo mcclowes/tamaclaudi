@@ -44,6 +44,12 @@ describe("advance", () => {
     expect(state.lastTick).toBe("2026-06-08T02:00:00.000Z");
   });
 
+  it("carries a worn accessory through a tick", () => {
+    const stats = babyStats({ accessory: "hat" });
+    const { state } = advance(stats, seed, [], new Date("2026-06-08T02:00:00Z"), DEFAULT_CONFIG);
+    expect(state.accessory).toBe("hat");
+  });
+
   it("applies queued events after decay", () => {
     const stats = babyStats();
     const { state } = advance(

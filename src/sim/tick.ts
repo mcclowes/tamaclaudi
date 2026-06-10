@@ -137,8 +137,11 @@ export function advance(
     config,
   );
 
+  // Spread the prior stats first so any field the sim doesn't model — cosmetic
+  // accessories, and anything added later — survives the tick instead of being
+  // silently dropped. The computed fields below then override what did change.
   const nextState: Stats = {
-    bornAt: stats.bornAt,
+    ...stats,
     lastTick: now.toISOString(),
     stage: stageAfter,
     health: health.health,
