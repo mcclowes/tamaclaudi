@@ -1,7 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { newlyUnlocked } from "./evaluate.js";
-import { STATE_ACHIEVEMENTS, type Achievement, type AchievementContext } from "./defs.js";
+import {
+  STATE_ACHIEVEMENTS,
+  ALL_ACHIEVEMENTS,
+  type Achievement,
+  type AchievementContext,
+} from "./defs.js";
 import { startingNeeds } from "../sim/stats.js";
+import { emptyCounters } from "../store/counters.js";
 import type { Stats } from "../types.js";
 
 const stats = (over: Partial<Stats> = {}): Stats => ({
@@ -64,8 +70,49 @@ describe("newlyUnlocked", () => {
     expect(ids(newlyUnlocked(STATE_ACHIEVEMENTS, ctx({}, 6))).includes("week-old")).toBe(false);
   });
 
-  it("has unique ids across the catalogue", () => {
-    const all = STATE_ACHIEVEMENTS.map((a) => a.id);
+  it("has unique ids across the whole catalogue", () => {
+    const all = ALL_ACHIEVEMENTS.map((a) => a.id);
     expect(new Set(all).size).toBe(all.length);
+  });
+
+  it("never unlocks a count-based achievement without counters", () => {
+    // A context with no counters: count-based ones must all stay locked.
+    const got = ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx(), []));
+    expect(got).not.toContain("well-fed");
+    expect(got).not.toContain("seasoned");
+  });
+
+  it("unlocks count-based achievements once the tallies cross their thresholds", () => {
+    const counters = { ...emptyCounters(), feed: 50, talk: 100, ticks: 1000 };
+    const got = ids(newlyUnlocked(ALL_ACHIEVEMENTS, { ...ctx(), counters }, []));
+    expect(got).toEqual(expect.arrayContaining(["well-fed", "chatterbox", "seasoned"]));
+    expect(got).not.toContain("playful"); // play count still 0
+  });
+
+  it("unlocks the higher count-based tiers only at their bigger thresholds", () => {
+    const counters = { ...emptyCounters(), feed: 200, ticks: 10000 };
+    const got = ids(newlyUnlocked(ALL_ACHIEVEMENTS, { ...ctx(), counters }, []));
+    expect(got).toEqual(expect.arrayContaining(["well-fed", "gourmand", "seasoned", "ancient-one"]));
+    expect(got).not.toContain("confidant"); // talk still 0
+  });
+
+  it("unlocks age and stage milestones at their thresholds", () => {
+    expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({ stage: "teen" }, 14)))).toEqual(
+      expect.arrayContaining(["teen-spirit", "fortnight"]),
+    );
+    expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({}, 6)))).not.toContain("fortnight");
+  });
+
+  it("unlocks 'picture-of-health' only when every need is 90+", () => {
+    const lush = { fullness: 95, energy: 92, hygiene: 99, joy: 90, bond: 100 };
+    expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({ needs: lush })))).toContain("picture-of-health");
+    const oneLow = { ...lush, joy: 80 };
+    expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({ needs: oneLow })))).not.toContain("picture-of-health");
+  });
+
+  it("unlocks the mood-band achievements from valence", () => {
+    expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({ valence: 72 })))).toContain("content");
+    expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({ valence: 20 })))).toContain("feeling-blue");
+    expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({ valence: 50 })))).not.toContain("feeling-blue");
   });
 });

@@ -1,15 +1,19 @@
 import { NEEDS, STAGES, type Stage, type Stats } from "../types.js";
+import { emptyCounters, type LifetimeCounters } from "../store/counters.js";
 
 /**
- * What an achievement's `check` gets to look at. Deliberately just the current
- * state plus age — these are the achievements decidable without any lifetime
- * history. Count-based achievements (fed 50 times, etc.) come in a later slice
- * once the body tracks lifetime counters; they'll extend this context.
+ * What an achievement's `check` gets to look at: the current state, age, and the
+ * lifetime counters. Counters are optional so state-threshold checks (and their
+ * tests) don't have to supply them; count-based checks read through `countersOf`
+ * which falls back to zeroes.
  */
 export interface AchievementContext {
   stats: Stats;
   ageDays: number;
+  counters?: LifetimeCounters;
 }
+
+const countersOf = (ctx: AchievementContext): LifetimeCounters => ctx.counters ?? emptyCounters();
 
 /**
  * One earnable achievement. Definitions live in code (the `check` predicate
@@ -45,4 +49,33 @@ export const STATE_ACHIEVEMENTS: Achievement[] = [
   { id: "week-old", title: "A Whole Week", description: "Lived seven days.", check: ({ ageDays }) => ageDays >= 7 },
   { id: "thriving", title: "Thriving", description: "Every need at 80 or above at once.", check: ({ stats }) => NEEDS.every((n) => stats.needs[n] >= 80) },
   { id: "on-the-edge", title: "On the Edge", description: "Stayed well with a need at rock bottom.", hidden: true, check: ({ stats }) => stats.health === "well" && NEEDS.some((n) => stats.needs[n] <= 5) },
+  { id: "teen-spirit", title: "Teen Spirit", description: "Reached the teenage years.", check: ({ stats }) => stats.stage === "teen" },
+  { id: "fortnight", title: "A Fortnight", description: "Lived two weeks.", check: ({ ageDays }) => ageDays >= 14 },
+  { id: "month-old", title: "A Month Old", description: "Lived thirty days.", check: ({ ageDays }) => ageDays >= 30 },
+  { id: "picture-of-health", title: "Picture of Health", description: "Every need at 90 or above, in good health.", check: ({ stats }) => stats.health === "well" && NEEDS.every((n) => stats.needs[n] >= 90) },
+  { id: "content", title: "Content", description: "Settled into a steady, happy mood (70+).", check: ({ stats }) => (stats.valence ?? 0) >= 70 },
+  { id: "feeling-blue", title: "Feeling Blue", description: "Weathered a properly low mood.", hidden: true, check: ({ stats }) => (stats.valence ?? 100) <= 25 },
 ];
+
+/**
+ * The count-based catalogue: earned by *how much* has happened over a lifetime,
+ * which only the counters store can answer. Read through `countersOf` so a
+ * context without counters simply hasn't reached any of these yet.
+ */
+export const COUNT_ACHIEVEMENTS: Achievement[] = [
+  { id: "well-fed", title: "Well-Fed", description: "Fed 50 times.", check: (c) => countersOf(c).feed >= 50 },
+  { id: "playful", title: "Playful", description: "Played 50 times.", check: (c) => countersOf(c).play >= 50 },
+  { id: "chatterbox", title: "Chatterbox", description: "Talked to 100 times.", check: (c) => countersOf(c).talk >= 100 },
+  { id: "clean-freak", title: "Clean Freak", description: "Cleaned 25 times.", check: (c) => countersOf(c).clean >= 25 },
+  { id: "nap-champion", title: "Nap Champion", description: "Rested 25 times.", check: (c) => countersOf(c).rest >= 25 },
+  { id: "seasoned", title: "Seasoned", description: "Lived 1000 ticks.", check: (c) => countersOf(c).ticks >= 1000 },
+  { id: "gourmand", title: "Gourmand", description: "Fed 200 times.", check: (c) => countersOf(c).feed >= 200 },
+  { id: "playmate", title: "Playmate", description: "Played 200 times.", check: (c) => countersOf(c).play >= 200 },
+  { id: "confidant", title: "Confidant", description: "Talked to 500 times.", check: (c) => countersOf(c).talk >= 500 },
+  { id: "immaculate", title: "Immaculate", description: "Cleaned 100 times.", check: (c) => countersOf(c).clean >= 100 },
+  { id: "well-slept", title: "Well-Slept", description: "Rested 100 times.", check: (c) => countersOf(c).rest >= 100 },
+  { id: "ancient-one", title: "Ancient One", description: "Lived 10,000 ticks.", check: (c) => countersOf(c).ticks >= 10000 },
+];
+
+/** The whole catalogue — what the tick evaluates and the view lists. */
+export const ALL_ACHIEVEMENTS: Achievement[] = [...STATE_ACHIEVEMENTS, ...COUNT_ACHIEVEMENTS];

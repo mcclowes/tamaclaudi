@@ -1,4 +1,4 @@
-import { STATE_ACHIEVEMENTS } from "../achievements/defs.js";
+import { ALL_ACHIEVEMENTS } from "../achievements/defs.js";
 import { readAchievements } from "../store/achievements.js";
 import type { CommandContext } from "./context.js";
 
@@ -9,8 +9,8 @@ import type { CommandContext } from "./context.js";
  */
 export function achievementsView(ctx: CommandContext): string {
   const unlocked = readAchievements(ctx.p).unlocked;
-  const earned = STATE_ACHIEVEMENTS.filter((a) => a.id in unlocked);
-  const locked = STATE_ACHIEVEMENTS.filter((a) => !(a.id in unlocked));
+  const earned = ALL_ACHIEVEMENTS.filter((a) => a.id in unlocked);
+  const locked = ALL_ACHIEVEMENTS.filter((a) => !(a.id in unlocked));
   const hiddenLocked = locked.filter((a) => a.hidden);
   const shownLocked = locked.filter((a) => !a.hidden);
 
