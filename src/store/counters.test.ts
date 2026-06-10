@@ -4,11 +4,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { paths, type CreaturePaths } from "./paths.js";
 import { readCounters, bumpCounters, emptyCounters } from "./counters.js";
-import type { CreatureEvent } from "../types.js";
+import type { CreatureEvent, Needs } from "../types.js";
 
 let dir: string;
 let p: CreaturePaths;
 const ev = (type: CreatureEvent["type"]): CreatureEvent => ({ at: "2026-06-08T00:00:00Z", type });
+// Comfortable by default (every need above the streak floor); override to break a streak.
+const comfy = (over: Partial<Needs> = {}): Needs => ({ fullness: 80, energy: 80, hygiene: 80, joy: 80, bond: 80, ...over });
 
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), "tama-"));
@@ -22,8 +24,8 @@ describe("counters store", () => {
   });
 
   it("counts one per applied event and one tick per bump, persisting", () => {
-    bumpCounters([ev("feed"), ev("feed"), ev("play")], p);
-    bumpCounters([ev("clean")], p);
+    bumpCounters([ev("feed"), ev("feed"), ev("play")], comfy(), p);
+    bumpCounters([ev("clean")], comfy(), p);
     const c = readCounters(p);
     expect(c.feed).toBe(2);
     expect(c.play).toBe(1);
@@ -33,9 +35,27 @@ describe("counters store", () => {
   });
 
   it("a quiet bump (no events) still advances the tick count", () => {
-    bumpCounters([], p);
-    bumpCounters([], p);
+    bumpCounters([], comfy(), p);
+    bumpCounters([], comfy(), p);
     expect(readCounters(p).ticks).toBe(2);
+  });
+
+  it("extends the care streak while comfortable and tracks the best", () => {
+    bumpCounters([], comfy(), p);
+    bumpCounters([], comfy(), p);
+    bumpCounters([], comfy(), p);
+    const c = readCounters(p);
+    expect(c.careStreak).toBe(3);
+    expect(c.bestCareStreak).toBe(3);
+  });
+
+  it("breaks the streak when any need dips below the floor, keeping the best", () => {
+    bumpCounters([], comfy(), p);
+    bumpCounters([], comfy(), p); // streak 2
+    bumpCounters([], comfy({ joy: 10 }), p); // a need below floor → break
+    const c = readCounters(p);
+    expect(c.careStreak).toBe(0);
+    expect(c.bestCareStreak).toBe(2);
   });
 
   it("fills in any missing field from an older partial file", () => {

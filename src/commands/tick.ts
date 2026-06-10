@@ -44,7 +44,7 @@ export function tick(ctx: CommandContext): string {
 
   // Fold this tick's activity into the lifetime tallies first, so count-based
   // achievements ("fed 50 times") can be judged on up-to-date numbers.
-  const counters = bumpCounters(events, ctx.p);
+  const counters = bumpCounters(events, state.needs, ctx.p);
 
   // Award any achievements the new state has just earned. Evaluated against the
   // persisted unlock set so each fires exactly once; recordUnlocks only writes
