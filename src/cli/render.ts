@@ -1,5 +1,6 @@
 import { NEEDS, type Memory, type Needs, type Question, type Stats } from "../types.js";
 import { ageDays } from "../sim/stages.js";
+import { wellbeing } from "../sim/valence.js";
 import { creatureArt } from "./art.js";
 import type { TickChanges } from "../sim/tick.js";
 
@@ -72,6 +73,22 @@ export function renderAttention(questions: Question[], since: Date, now: Date): 
     .join("\n");
 }
 
+/**
+ * The mood line: valence (the lagged wellbeing scalar) plus a direction hint
+ * comparing it to where the needs actually sit now. When current wellbeing is
+ * above valence the mood is still lifting toward a better moment; when it's
+ * below, a good moment is settling back down. This is what makes valence legible
+ * to the soul — the number, and which way the feeling is leaning.
+ */
+function moodLine(changes: TickChanges): string {
+  const after = changes.valenceAfter;
+  const delta = after - changes.valenceBefore;
+  const note = Math.abs(delta) >= 0.5 ? ` (${signed(delta)})` : "";
+  const now = wellbeing(changes.needsAfter);
+  const lean = now > after + 1 ? "↑ lifting" : now < after - 1 ? "↓ settling" : "· steady";
+  return `mood:      ${String(Math.round(after)).padStart(3)}${note}  ${lean}`;
+}
+
 /** The diff `tama tick` prints — what the soul loop reads to interpret. */
 export function renderTick(
   changes: TickChanges,
@@ -105,6 +122,8 @@ export function renderTick(
     const note = Math.abs(delta) >= 0.5 ? ` (${signed(delta)})` : "";
     lines.push(`  ${n.padEnd(9)} ${String(Math.round(after)).padStart(3)}${note}`);
   }
+
+  lines.push(moodLine(changes));
 
   if (changes.warning) lines.push(`⚠ ${changes.warning}`);
   if (changes.died) lines.push("† the creature has died.");

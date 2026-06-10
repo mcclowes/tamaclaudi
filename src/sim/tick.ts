@@ -60,6 +60,8 @@ export interface TickChanges {
   hatched: boolean;
   died: boolean;
   warning: string | null;
+  valenceBefore: number;
+  valenceAfter: number;
 }
 
 export interface TickResult {
@@ -78,6 +80,8 @@ function emptyChanges(stats: Stats): TickChanges {
     hatched: false,
     died: false,
     warning: null,
+    valenceBefore: stats.valence ?? wellbeing(stats.needs),
+    valenceAfter: stats.valence ?? wellbeing(stats.needs),
   };
 }
 
@@ -170,6 +174,8 @@ export function advance(
     hatched: stageBefore === "egg" && stageAfter !== "egg",
     died: health.health === "dead",
     warning: health.warning,
+    valenceBefore: stats.valence ?? wellbeing(stats.needs),
+    valenceAfter: valence,
   };
 
   return { state: nextState, changes };
