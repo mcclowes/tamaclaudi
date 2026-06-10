@@ -8,12 +8,12 @@ import {
   writeStats,
 } from "../store/io.js";
 import { readMemory } from "../store/memory.js";
-import { readQuestions } from "../store/agency.js";
+import { readQuestions, readProposals } from "../store/agency.js";
 import { readAchievements, recordUnlocks } from "../store/achievements.js";
 import { bumpCounters } from "../store/counters.js";
 import { ALL_ACHIEVEMENTS } from "../achievements/defs.js";
 import { newlyUnlocked } from "../achievements/evaluate.js";
-import { renderAttention, renderTick } from "../cli/render.js";
+import { renderAttention, renderProposalDecisions, renderTick } from "../cli/render.js";
 import type { CommandContext } from "./context.js";
 
 /**
@@ -60,6 +60,11 @@ export function tick(ctx: CommandContext): string {
   // Surface what the creature is carrying (mood + recent beats) and any reply
   // @mcclowes left since the last tick, so the loop reads its memory and its
   // news in the same diff it reads its body — no extra file read each tick.
-  const attention = renderAttention(readQuestions(ctx.p), lastLooked, ctx.now);
+  const attention = [
+    renderAttention(readQuestions(ctx.p), lastLooked, ctx.now),
+    renderProposalDecisions(readProposals(ctx.p), lastLooked, ctx.now),
+  ]
+    .filter((s) => s.trim())
+    .join("\n");
   return renderTick(changes, state, readMemory(ctx.p), attention, fresh);
 }

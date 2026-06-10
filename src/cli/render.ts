@@ -1,4 +1,4 @@
-import { NEEDS, type Memory, type Needs, type Question, type Stats } from "../types.js";
+import { NEEDS, type Memory, type Needs, type Proposal, type Question, type Stats } from "../types.js";
 import { ageDays } from "../sim/stages.js";
 import { wellbeing } from "../sim/valence.js";
 import type { Achievement } from "../achievements/defs.js";
@@ -71,6 +71,25 @@ export function renderAttention(questions: Question[], since: Date, now: Date): 
       return t > sinceMs && t <= nowMs;
     })
     .map((q) => `💬 @mcclowes answered ${q.id}: ${q.answer}`)
+    .join("\n");
+}
+
+/**
+ * The same idea for proposals: surface decisions (approved / denied) @mcclowes
+ * made since the soul last looked, windowed by (since, now] on `decidedAt` so
+ * each shows exactly once. Spares the loop from re-reading proposals.json every
+ * tick just to notice it's been unblocked. (Goal g6.)
+ */
+export function renderProposalDecisions(proposals: Proposal[], since: Date, now: Date): string {
+  const sinceMs = since.getTime();
+  const nowMs = now.getTime();
+  return proposals
+    .filter((p) => {
+      if (!p.decidedAt || (p.status !== "approved" && p.status !== "denied")) return false;
+      const t = Date.parse(p.decidedAt);
+      return t > sinceMs && t <= nowMs;
+    })
+    .map((p) => `📋 @mcclowes ${p.status} ${p.id}: ${p.action}`)
     .join("\n");
 }
 

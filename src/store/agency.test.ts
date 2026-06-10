@@ -51,6 +51,21 @@ describe("proposal lifecycle", () => {
     expect(readProposals(p)[0].status).toBe("approved");
   });
 
+  it("stamps decidedAt on approve/deny when given a time, but not on other transitions", () => {
+    const a = addProposal(prop("a"), p).id;
+    setProposalStatus(a, "approved", p, "2026-06-11T00:00:00.000Z");
+    expect(readProposals(p).find((x) => x.id === a)?.decidedAt).toBe("2026-06-11T00:00:00.000Z");
+
+    const b = addProposal(prop("b"), p).id;
+    setProposalStatus(b, "denied", p, "2026-06-11T01:00:00.000Z");
+    expect(readProposals(p).find((x) => x.id === b)?.decidedAt).toBe("2026-06-11T01:00:00.000Z");
+
+    // No time given → no stamp (back-compat with callers that don't pass one).
+    const c = addProposal(prop("c"), p).id;
+    setProposalStatus(c, "approved", p);
+    expect(readProposals(p).find((x) => x.id === c)?.decidedAt).toBeUndefined();
+  });
+
   it("resolve records a result and marks done — only from approved", () => {
     const { id } = addProposal(prop("x"), p);
     expect(() => resolveProposal(id, "did it", p)).toThrow(/not approved/);

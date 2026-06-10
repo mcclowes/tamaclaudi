@@ -46,11 +46,15 @@ export function setProposalStatus(
   id: string,
   status: Proposal["status"],
   p: CreaturePaths = paths(),
+  decidedAt?: string,
 ): Proposal {
   const items = readProposals(p);
   const found = items.find((x) => x.id === id);
   if (!found) throw new Error(`No proposal with id ${id}.`);
   found.status = status;
+  // Stamp the moment of decision so the tick diff can surface it once, the way
+  // it already does for answered questions. Only approvals/denials are decisions.
+  if (decidedAt && (status === "approved" || status === "denied")) found.decidedAt = decidedAt;
   writeProposals(items, p);
   return found;
 }
