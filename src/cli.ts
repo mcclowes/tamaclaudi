@@ -36,6 +36,7 @@ import {
   remember,
   mood,
   memory,
+  wear,
 } from "./commands/growth.js";
 
 const HELP = `tamaclaudie — raise a creature in your terminal
@@ -53,6 +54,7 @@ Usage: tama <command> [args]
   feed [food]      raise fullness; a favourite food raises more
   play [game]      raise joy, costs energy
   clean            raise hygiene
+  wear [item|off]  put a cosmetic accessory on (e.g. a hat), or take it off
   rest             settle down to recover energy (quiet ticks also recover it)
   talk "..."       say something; the next tick replies in feed.md
   tick             advance the body (the soul loop calls this; you can too)
@@ -183,6 +185,8 @@ export function run(argv: string[], ctx: CommandContext = defaultContext()): str
         { title: positional.join(" "), summary: strFlag(flags, "summary"), path: strFlag(flags, "path") },
         ctx,
       );
+    case "wear":
+      return wear(positional[0], ctx);
     case "deliverables":
       return deliverables(ctx, flags.has("all"));
     case "take":

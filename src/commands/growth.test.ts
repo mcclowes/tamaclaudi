@@ -15,7 +15,9 @@ import {
   remember,
   mood,
   memory,
+  wear,
 } from "./growth.js";
+import { readStats } from "../store/io.js";
 
 let dir: string;
 let p: CreaturePaths;
@@ -91,5 +93,40 @@ describe("memory", () => {
     const diff = tick(at("2026-06-09T12:00:00Z"));
     expect(diff).not.toMatch(/carrying:/);
     expect(diff).not.toMatch(/🧠/);
+  });
+});
+
+describe("wear", () => {
+  const t = () => at("2026-06-09T00:00:00Z");
+
+  it("reports bare when nothing is on", () => {
+    expect(wear(undefined, t())).toMatch(/nothing/i);
+  });
+
+  it("puts a known accessory on and persists it", () => {
+    const out = wear("hat", t());
+    expect(out).toMatch(/hat/i);
+    expect(readStats(p).accessory).toBe("hat");
+  });
+
+  it("is case-insensitive about the accessory name", () => {
+    wear("HAT", t());
+    expect(readStats(p).accessory).toBe("hat");
+  });
+
+  it("reports what's currently worn when asked", () => {
+    wear("hat", t());
+    expect(wear(undefined, t())).toMatch(/hat/i);
+  });
+
+  it("takes the accessory off and leaves no field behind", () => {
+    wear("hat", t());
+    wear("off", t());
+    expect(readStats(p).accessory).toBeUndefined();
+  });
+
+  it("rejects an unknown accessory and changes nothing", () => {
+    expect(() => wear("crown", t())).toThrow(/unknown accessory/i);
+    expect(readStats(p).accessory).toBeUndefined();
   });
 });

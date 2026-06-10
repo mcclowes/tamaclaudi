@@ -1,4 +1,4 @@
-import { NEEDS, type Stats } from "../types.js";
+import { NEEDS, type Accessory, type Stats } from "../types.js";
 
 /**
  * The creature's face, drawn from how it's doing. The body never stores a
@@ -82,7 +82,24 @@ function bodyArt(stage: Stats["stage"], expr: Expression): string[] {
   }
 }
 
-/** The creature as ASCII art, chosen by its stage and current mood. */
+/**
+ * A worn accessory, drawn to sit centred on the 11-wide head. Returns the lines
+ * to stack directly above the domed head.
+ */
+const ACCESSORY_ART: Record<Accessory, string[]> = {
+  hat: ["     .---.", "   __|   |__"],
+};
+
+/**
+ * The creature as ASCII art, chosen by its stage and current mood. A cosmetic
+ * accessory perches on the head — but only on a hatched, living creature; an
+ * egg has nowhere to put a hat.
+ */
 export function creatureArt(stats: Stats): string {
-  return bodyArt(stats.stage, expressionFor(stats)).join("\n");
+  const expr = expressionFor(stats);
+  const lines = bodyArt(stats.stage, expr);
+  if (stats.accessory && stats.stage !== "egg" && expr !== "dead") {
+    return [...ACCESSORY_ART[stats.accessory], ...lines].join("\n");
+  }
+  return lines.join("\n");
 }

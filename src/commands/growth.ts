@@ -1,4 +1,4 @@
-import { readStats } from "../store/io.js";
+import { readStats, writeStats } from "../store/io.js";
 import {
   addDeliverable,
   readDeliverables,
@@ -7,8 +7,37 @@ import {
 import { readMemory, rememberBeat, setMood } from "../store/memory.js";
 import { readCapabilities } from "../cli/capabilities.js";
 import { renderMemory } from "../cli/render.js";
-import type { Deliverable } from "../types.js";
+import { ACCESSORIES, type Accessory, type Deliverable } from "../types.js";
 import type { CommandContext } from "./context.js";
+
+const BARE_WORDS = new Set(["none", "off", "nothing", "bare"]);
+
+/**
+ * Put a cosmetic accessory on the creature, or take it off. Purely for show —
+ * accessories never touch needs or health. `wear` with no argument reports
+ * what's currently on.
+ */
+export function wear(item: string | undefined, ctx: CommandContext): string {
+  const stats = readStats(ctx.p);
+
+  if (item === undefined) {
+    return stats.accessory ? `Wearing a ${stats.accessory}.` : "Wearing nothing.";
+  }
+
+  const v = item.toLowerCase();
+  if (BARE_WORDS.has(v)) {
+    const { accessory: _removed, ...bare } = stats;
+    writeStats(bare, ctx.p);
+    return "Took it off.";
+  }
+
+  if (!ACCESSORIES.includes(v as Accessory)) {
+    throw new Error(`Unknown accessory: ${item}. Available: ${ACCESSORIES.join(", ")}.`);
+  }
+
+  writeStats({ ...stats, accessory: v as Accessory }, ctx.p);
+  return `Now wearing a ${v}. 🎩`;
+}
 
 // --- capabilities: what the creature has learned to do ---------------------
 
