@@ -55,6 +55,9 @@ export const STATE_ACHIEVEMENTS: Achievement[] = [
   { id: "picture-of-health", title: "Picture of Health", description: "Every need at 90 or above, in good health.", check: ({ stats }) => stats.health === "well" && NEEDS.every((n) => stats.needs[n] >= 90) },
   { id: "content", title: "Content", description: "Settled into a steady, happy mood (70+).", check: ({ stats }) => (stats.valence ?? 0) >= 70 },
   { id: "feeling-blue", title: "Feeling Blue", description: "Weathered a properly low mood.", hidden: true, check: ({ stats }) => (stats.valence ?? 100) <= 25 },
+  { id: "day-old", title: "A Day Old", description: "Lived a whole day.", check: ({ ageDays }) => ageDays >= 1 },
+  { id: "glowing", title: "Glowing", description: "Mood up at a bright 85+.", check: ({ stats }) => (stats.valence ?? 0) >= 85 },
+  { id: "grown-and-glad", title: "Grown & Glad", description: "Reached adulthood in a happy mood (70+).", check: ({ stats }) => stats.stage === "adult" && (stats.valence ?? 0) >= 70 },
 ];
 
 /**
@@ -75,6 +78,13 @@ export const COUNT_ACHIEVEMENTS: Achievement[] = [
   { id: "immaculate", title: "Immaculate", description: "Cleaned 100 times.", check: (c) => countersOf(c).clean >= 100 },
   { id: "well-slept", title: "Well-Slept", description: "Rested 100 times.", check: (c) => countersOf(c).rest >= 100 },
   { id: "ancient-one", title: "Ancient One", description: "Lived 10,000 ticks.", check: (c) => countersOf(c).ticks >= 10000 },
+  { id: "centurion", title: "Centurion", description: "Lived 100 ticks.", check: (c) => countersOf(c).ticks >= 100 },
+  { id: "marathon", title: "Marathon", description: "Lived 5,000 ticks.", check: (c) => countersOf(c).ticks >= 5000 },
+  { id: "play-buddy", title: "Play Buddy", description: "Played 100 times.", check: (c) => countersOf(c).play >= 100 },
+  { id: "social-butterfly", title: "Social Butterfly", description: "Talked to 250 times.", check: (c) => countersOf(c).talk >= 250 },
+  { id: "groomed", title: "Well-Groomed", description: "Cleaned 50 times.", check: (c) => countersOf(c).clean >= 50 },
+  { id: "rested-soul", title: "Rested Soul", description: "Rested 50 times.", check: (c) => countersOf(c).rest >= 50 },
+  { id: "devoted", title: "Devoted", description: "Fed 500 times.", check: (c) => countersOf(c).feed >= 500 },
 ];
 
 /** The whole catalogue — what the tick evaluates and the view lists. */

@@ -115,4 +115,18 @@ describe("newlyUnlocked", () => {
     expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({ valence: 20 })))).toContain("feeling-blue");
     expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({ valence: 50 })))).not.toContain("feeling-blue");
   });
+
+  it("unlocks the tick tiers in order (centurion before marathon before ancient)", () => {
+    const got = (n: number) => ids(newlyUnlocked(ALL_ACHIEVEMENTS, { ...ctx(), counters: { ...emptyCounters(), ticks: n } }));
+    expect(got(100)).toEqual(expect.arrayContaining(["centurion"]));
+    expect(got(100)).not.toContain("marathon");
+    expect(got(5000)).toEqual(expect.arrayContaining(["centurion", "seasoned", "marathon"]));
+    expect(got(5000)).not.toContain("ancient-one");
+  });
+
+  it("unlocks the 'grown-and-glad' combo only when adult AND happy", () => {
+    expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({ stage: "adult", valence: 75 })))).toContain("grown-and-glad");
+    expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({ stage: "adult", valence: 40 })))).not.toContain("grown-and-glad");
+    expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({ stage: "child", valence: 90 })))).not.toContain("grown-and-glad");
+  });
 });
