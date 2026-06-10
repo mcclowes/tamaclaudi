@@ -8,6 +8,7 @@ import { queueAction } from "./commands/actions.js";
 import { status, listen, diary } from "./commands/read.js";
 import { watch } from "./commands/watch.js";
 import { config } from "./commands/config.js";
+import { achievementsView } from "./commands/achievements.js";
 import {
   propose,
   ask,
@@ -61,6 +62,7 @@ Usage: tama <command> [args]
   listen           print what it's saying to you (feed.md)
   diary [date]     print a history page (default: today, YYYY-MM-DD)
   capabilities     what your creature has learned to do for you (its skills)
+  achievements     the trophy cabinet: milestones earned and still to earn
 
  hand it a problem to work on:
   task "..."             give the creature a problem to pursue across ticks
@@ -179,6 +181,9 @@ export function run(argv: string[], ctx: CommandContext = defaultContext()): str
     case "capabilities":
     case "skills":
       return capabilities(ctx);
+    case "achievements":
+    case "trophies":
+      return achievementsView(ctx);
 
     case "deliver":
       return deliver(
