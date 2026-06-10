@@ -33,6 +33,14 @@ export interface Stats {
   ailingSince: string | null;
   /** A cosmetic accessory the creature is wearing, if any. Absent = bare. */
   accessory?: Accessory;
+  /**
+   * A smoothed wellbeing scalar (0–100) that lags the needs, giving mood
+   * inertia: it chases the mean of the needs slowly, so feelings carry across
+   * ticks instead of snapping to the current numbers. The soul still names the
+   * feeling — this just gives it momentum. Absent on creatures born before it
+   * existed; the next tick fills it in.
+   */
+  valence?: number;
 }
 
 export const TEMPERAMENT_AXES = [

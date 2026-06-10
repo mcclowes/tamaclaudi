@@ -1,5 +1,6 @@
 import { DEFAULT_CONFIG, type Stats } from "../types.js";
 import { startingNeeds } from "../sim/stats.js";
+import { wellbeing } from "../sim/valence.js";
 import { generateSeed, randomRngSeed } from "../seed/generate.js";
 import {
   ensureDirs,
@@ -45,6 +46,7 @@ export function init(opts: InitOptions, ctx: CommandContext): string {
     health: "well",
     needs: startingNeeds(),
     ailingSince: null,
+    valence: wellbeing(startingNeeds()),
   };
 
   writeSeed(seed, ctx.p);

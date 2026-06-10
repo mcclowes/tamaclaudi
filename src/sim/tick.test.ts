@@ -170,6 +170,35 @@ describe("advance", () => {
     expect(idle.state.needs.energy).toBeGreaterThan(stats.needs.energy);
   });
 
+  it("populates valence and lets it lag the needs across a tick", () => {
+    // Low prior mood but healthy needs: valence should rise toward wellbeing,
+    // but only part of the way over a short tick — momentum, not a snap.
+    const stats = babyStats({ valence: 10 });
+    const { state } = advance(
+      stats,
+      seed,
+      [],
+      new Date("2026-06-08T01:00:00Z"),
+      DEFAULT_CONFIG,
+    );
+    expect(state.valence).toBeDefined();
+    expect(state.valence!).toBeGreaterThan(10); // moved up toward wellbeing
+    expect(state.valence!).toBeLessThan(60); // but did not snap all the way there
+  });
+
+  it("fills in valence even when a creature was born without it", () => {
+    const stats = babyStats();
+    delete stats.valence;
+    const { state } = advance(
+      stats,
+      seed,
+      [],
+      new Date("2026-06-08T01:00:00Z"),
+      DEFAULT_CONFIG,
+    );
+    expect(state.valence).toBeDefined();
+  });
+
   it("a rest event can carry energy to full, and never past 100", () => {
     const stats = babyStats({ needs: { ...startingNeeds(), energy: 95 } });
     const { state } = advance(
