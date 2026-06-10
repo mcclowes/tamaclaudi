@@ -10,7 +10,8 @@ import {
 import { readMemory } from "../store/memory.js";
 import { readQuestions } from "../store/agency.js";
 import { readAchievements, recordUnlocks } from "../store/achievements.js";
-import { STATE_ACHIEVEMENTS } from "../achievements/defs.js";
+import { bumpCounters } from "../store/counters.js";
+import { ALL_ACHIEVEMENTS } from "../achievements/defs.js";
 import { newlyUnlocked } from "../achievements/evaluate.js";
 import { renderAttention, renderTick } from "../cli/render.js";
 import type { CommandContext } from "./context.js";
@@ -41,11 +42,19 @@ export function tick(ctx: CommandContext): string {
   const { state, changes } = advance(stats, seed, events, ctx.now, config);
   writeStats(state, ctx.p);
 
+  // Fold this tick's activity into the lifetime tallies first, so count-based
+  // achievements ("fed 50 times") can be judged on up-to-date numbers.
+  const counters = bumpCounters(events, ctx.p);
+
   // Award any achievements the new state has just earned. Evaluated against the
   // persisted unlock set so each fires exactly once; recordUnlocks only writes
   // when something is genuinely new, so a quiet tick touches no file.
   const earned = Object.keys(readAchievements(ctx.p).unlocked);
-  const fresh = newlyUnlocked(STATE_ACHIEVEMENTS, { stats: state, ageDays: ageDays(state.bornAt, ctx.now) }, earned);
+  const fresh = newlyUnlocked(
+    ALL_ACHIEVEMENTS,
+    { stats: state, ageDays: ageDays(state.bornAt, ctx.now), counters },
+    earned,
+  );
   if (fresh.length) recordUnlocks(fresh.map((a) => a.id), ctx.now, ctx.p);
 
   // Surface what the creature is carrying (mood + recent beats) and any reply
