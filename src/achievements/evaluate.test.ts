@@ -88,4 +88,31 @@ describe("newlyUnlocked", () => {
     expect(got).toEqual(expect.arrayContaining(["well-fed", "chatterbox", "seasoned"]));
     expect(got).not.toContain("playful"); // play count still 0
   });
+
+  it("unlocks the higher count-based tiers only at their bigger thresholds", () => {
+    const counters = { ...emptyCounters(), feed: 200, ticks: 10000 };
+    const got = ids(newlyUnlocked(ALL_ACHIEVEMENTS, { ...ctx(), counters }, []));
+    expect(got).toEqual(expect.arrayContaining(["well-fed", "gourmand", "seasoned", "ancient-one"]));
+    expect(got).not.toContain("confidant"); // talk still 0
+  });
+
+  it("unlocks age and stage milestones at their thresholds", () => {
+    expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({ stage: "teen" }, 14)))).toEqual(
+      expect.arrayContaining(["teen-spirit", "fortnight"]),
+    );
+    expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({}, 6)))).not.toContain("fortnight");
+  });
+
+  it("unlocks 'picture-of-health' only when every need is 90+", () => {
+    const lush = { fullness: 95, energy: 92, hygiene: 99, joy: 90, bond: 100 };
+    expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({ needs: lush })))).toContain("picture-of-health");
+    const oneLow = { ...lush, joy: 80 };
+    expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({ needs: oneLow })))).not.toContain("picture-of-health");
+  });
+
+  it("unlocks the mood-band achievements from valence", () => {
+    expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({ valence: 72 })))).toContain("content");
+    expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({ valence: 20 })))).toContain("feeling-blue");
+    expect(ids(newlyUnlocked(ALL_ACHIEVEMENTS, ctx({ valence: 50 })))).not.toContain("feeling-blue");
+  });
 });

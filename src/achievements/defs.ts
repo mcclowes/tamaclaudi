@@ -49,6 +49,12 @@ export const STATE_ACHIEVEMENTS: Achievement[] = [
   { id: "week-old", title: "A Whole Week", description: "Lived seven days.", check: ({ ageDays }) => ageDays >= 7 },
   { id: "thriving", title: "Thriving", description: "Every need at 80 or above at once.", check: ({ stats }) => NEEDS.every((n) => stats.needs[n] >= 80) },
   { id: "on-the-edge", title: "On the Edge", description: "Stayed well with a need at rock bottom.", hidden: true, check: ({ stats }) => stats.health === "well" && NEEDS.some((n) => stats.needs[n] <= 5) },
+  { id: "teen-spirit", title: "Teen Spirit", description: "Reached the teenage years.", check: ({ stats }) => stats.stage === "teen" },
+  { id: "fortnight", title: "A Fortnight", description: "Lived two weeks.", check: ({ ageDays }) => ageDays >= 14 },
+  { id: "month-old", title: "A Month Old", description: "Lived thirty days.", check: ({ ageDays }) => ageDays >= 30 },
+  { id: "picture-of-health", title: "Picture of Health", description: "Every need at 90 or above, in good health.", check: ({ stats }) => stats.health === "well" && NEEDS.every((n) => stats.needs[n] >= 90) },
+  { id: "content", title: "Content", description: "Settled into a steady, happy mood (70+).", check: ({ stats }) => (stats.valence ?? 0) >= 70 },
+  { id: "feeling-blue", title: "Feeling Blue", description: "Weathered a properly low mood.", hidden: true, check: ({ stats }) => (stats.valence ?? 100) <= 25 },
 ];
 
 /**
@@ -63,6 +69,12 @@ export const COUNT_ACHIEVEMENTS: Achievement[] = [
   { id: "clean-freak", title: "Clean Freak", description: "Cleaned 25 times.", check: (c) => countersOf(c).clean >= 25 },
   { id: "nap-champion", title: "Nap Champion", description: "Rested 25 times.", check: (c) => countersOf(c).rest >= 25 },
   { id: "seasoned", title: "Seasoned", description: "Lived 1000 ticks.", check: (c) => countersOf(c).ticks >= 1000 },
+  { id: "gourmand", title: "Gourmand", description: "Fed 200 times.", check: (c) => countersOf(c).feed >= 200 },
+  { id: "playmate", title: "Playmate", description: "Played 200 times.", check: (c) => countersOf(c).play >= 200 },
+  { id: "confidant", title: "Confidant", description: "Talked to 500 times.", check: (c) => countersOf(c).talk >= 500 },
+  { id: "immaculate", title: "Immaculate", description: "Cleaned 100 times.", check: (c) => countersOf(c).clean >= 100 },
+  { id: "well-slept", title: "Well-Slept", description: "Rested 100 times.", check: (c) => countersOf(c).rest >= 100 },
+  { id: "ancient-one", title: "Ancient One", description: "Lived 10,000 ticks.", check: (c) => countersOf(c).ticks >= 10000 },
 ];
 
 /** The whole catalogue — what the tick evaluates and the view lists. */
