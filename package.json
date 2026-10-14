@@ -14,7 +14,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "live": "claude \"/loop 7m /live\""
+    "live": "claude \"/loop 10m /live\""
   },
   "engines": {
     "node": ">=20"
