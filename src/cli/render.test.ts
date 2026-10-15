@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { renderAttention, renderStatus, renderTick } from "./render.js";
-import type { Needs, Question, Stats } from "../types.js";
+import { renderAttention, renderProposalDecisions, renderStatus, renderTick } from "./render.js";
+import type { Needs, Proposal, Question, Stats } from "../types.js";
 import type { TickChanges } from "../sim/tick.js";
 
 const needs: Needs = { fullness: 100, energy: 50, hygiene: 80, joy: 65, bond: 30 };
@@ -144,5 +144,34 @@ describe("renderAttention", () => {
 
   it("ignores questions that have no answer yet", () => {
     expect(renderAttention([q({ id: "q3" })], since, now)).toBe("");
+  });
+});
+
+describe("renderProposalDecisions", () => {
+  const since = new Date("2026-06-08T10:00:00.000Z");
+  const now = new Date("2026-06-08T11:00:00.000Z");
+  const prop = (over: Partial<Proposal> = {}): Proposal => ({
+    id: "p1",
+    at: "2026-06-08T09:00:00.000Z",
+    action: "push the thing",
+    status: "approved",
+    decidedAt: "2026-06-08T10:30:00.000Z",
+    ...over,
+  });
+
+  it("surfaces approvals and denials decided within the window, with id and action", () => {
+    const out = renderProposalDecisions(
+      [prop(), prop({ id: "p2", status: "denied", action: "delete prod" })],
+      since,
+      now,
+    );
+    expect(out).toMatch(/📋 @mcclowes approved p1: push the thing/);
+    expect(out).toMatch(/📋 @mcclowes denied p2: delete prod/);
+  });
+
+  it("ignores pending proposals and decisions outside the window", () => {
+    expect(renderProposalDecisions([prop({ status: "pending", decidedAt: undefined })], since, now)).toBe("");
+    expect(renderProposalDecisions([prop({ decidedAt: "2026-06-08T09:00:00.000Z" })], since, now)).toBe("");
+    expect(renderProposalDecisions([prop({ status: "done", decidedAt: "2026-06-08T10:30:00.000Z" })], since, now)).toBe("");
   });
 });

@@ -66,13 +66,13 @@ export function proposals(ctx: CommandContext, all = false): string {
 
 export function approve(id: string | undefined, ctx: CommandContext): string {
   if (!id) throw new Error("`tama approve` needs a proposal id, e.g. tama approve p1");
-  const p = setProposalStatus(id, "approved", ctx.p);
+  const p = setProposalStatus(id, "approved", ctx.p, ctx.now.toISOString());
   return `✅ approved ${p.id}: ${p.action}\n   The loop will carry it out on its next tick.`;
 }
 
 export function deny(id: string | undefined, ctx: CommandContext): string {
   if (!id) throw new Error("`tama deny` needs a proposal id, e.g. tama deny p1");
-  const p = setProposalStatus(id, "denied", ctx.p);
+  const p = setProposalStatus(id, "denied", ctx.p, ctx.now.toISOString());
   return `🚫 denied ${p.id}: ${p.action}`;
 }
 

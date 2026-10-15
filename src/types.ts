@@ -93,6 +93,7 @@ export interface Proposal {
   command?: string; // the exact command/plan it would run, if any
   status: ProposalStatus;
   result?: string; // filled in by the loop once executed
+  decidedAt?: string; // ISO — when @mcclowes approved or denied it (drives the tick diff)
 }
 
 export type TaskStatus = "open" | "working" | "done";

@@ -10,7 +10,7 @@ import type { CommandContext } from "../commands/context.js";
 const RULE_WIDTH = 46;
 
 /** A titled horizontal rule: ── title ──────────── */
-function rule(title: string): string {
+export function rule(title: string): string {
   const head = `── ${title} `;
   return head + "─".repeat(Math.max(0, RULE_WIDTH - head.length));
 }
@@ -38,15 +38,14 @@ function clip(s: string, width: number): string {
   return s.length > width ? s.slice(0, width - 1) + "…" : s;
 }
 
-/** First few non-empty lines of the feed, each clipped to keep the panel tidy. */
-function feedSnippet(feed: string, lines = 3, width = 56): string[] {
+/** Every non-empty line of the feed, in full — this is the creature's voice, so it's never clipped. */
+function feedLines(feed: string): string[] {
   const picked = feed
     .split("\n")
     .map((l) => l.trim())
-    .filter((l) => l.length > 0)
-    .slice(0, lines);
+    .filter((l) => l.length > 0);
   if (!picked.length) return ["(quiet — run the soul loop to give it a voice)"];
-  return picked.map((l) => clip(l, width));
+  return picked;
 }
 
 /**
@@ -64,10 +63,6 @@ export function renderDashboard(ctx: CommandContext): string {
   out.push(rule(`${stats.stage} · ${age.toFixed(1)}d · ${stats.health}`));
   out.push("");
   out.push(...sideBySide(creatureArt(stats).split("\n"), needRows(stats.needs)));
-  out.push("");
-
-  out.push(rule("saying"));
-  for (const line of feedSnippet(readFeed(ctx.p))) out.push(`  ${line}`);
   out.push("");
 
   const pending = readProposals(ctx.p).filter((p) => p.status === "pending");
@@ -92,6 +87,10 @@ export function renderDashboard(ctx: CommandContext): string {
   out.push(rule("wants"));
   if (!wants.length) out.push("  (no active goals)");
   else for (const g of wants) out.push(`  [${g.id}] ${g.text}`);
+  out.push("");
+
+  out.push(rule("saying"));
+  for (const line of feedLines(readFeed(ctx.p))) out.push(`  ${line}`);
 
   return out.join("\n");
 }
